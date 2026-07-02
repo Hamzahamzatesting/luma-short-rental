@@ -49,6 +49,24 @@ Until this is done, clicking "Continue with Google" will show an error — that'
 
 Supabase creates new tables with Row Level Security **off** by default. `0005_rls_policies.sql` turns it on for every table, but it's worth double-checking in **Database → Tables** that RLS shows as enabled on: `destinations`, `hosts`, `amenities`, `listings`, `reviews`, `testimonials`, `faqs`, `profiles`, `bookings`.
 
+## 7. Branded auth emails (Supabase)
+
+Supabase's default signup/reset-password emails are unbranded. Paste the branded versions into **Authentication → Email Templates**:
+
+- **Confirm signup** → paste `supabase/email-templates/confirm-signup.html`, subject `Confirm your email — LUMA`
+- **Reset Password** → paste `supabase/email-templates/reset-password.html`, subject `Reset your password — LUMA`
+
+## 8. Booking confirmation emails (Resend)
+
+Booking confirmations are sent by our own code (not Supabase), via [Resend](https://resend.com). Add to `.env.local`:
+
+```
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=LUMA <onboarding@resend.dev>
+```
+
+The sandbox sender (`onboarding@resend.dev`) works immediately with no setup, but mail providers often route it to spam since it's a shared domain used by many test apps — expect to find test emails in Spam and mark them "Not spam." **Before going live**, verify your own domain in Resend (Domains → Add Domain → add the TXT/CNAME records it gives you to your DNS), then change `RESEND_FROM_EMAIL` to `LUMA <bookings@yourdomain.com>` for reliable inbox delivery.
+
 ## What to expect once this is done
 
 - Home, Search, and every listing page will show the real seeded catalog instead of an empty state.
