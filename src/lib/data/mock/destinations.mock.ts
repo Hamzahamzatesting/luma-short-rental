@@ -1,0 +1,68 @@
+import type { Destination } from "../types";
+import { unsplash } from "./images";
+
+export const destinationsMock: Destination[] = [
+  {
+    id: "dest-marrakech",
+    slug: "marrakech",
+    name: "Marrakech",
+    country: "Morocco",
+    imageUrl: unsplash("1539020140153-e479b8c22e70"),
+    listingCount: 3,
+    blurb: "Riad courtyards, rooftop light and the pulse of the medina.",
+  },
+  {
+    id: "dest-casablanca",
+    slug: "casablanca",
+    name: "Casablanca",
+    country: "Morocco",
+    imageUrl: unsplash("1600210492486-724fe5c67fb0"),
+    listingCount: 3,
+    blurb: "Art Deco elegance meets the Atlantic skyline.",
+  },
+  {
+    id: "dest-rabat",
+    slug: "rabat",
+    name: "Rabat",
+    country: "Morocco",
+    imageUrl: unsplash("1618221195710-dd6b41faaea6"),
+    listingCount: 3,
+    blurb: "Quiet gardens and coastal calm in the capital.",
+  },
+  {
+    id: "dest-tangier",
+    slug: "tangier",
+    name: "Tangier",
+    country: "Morocco",
+    imageUrl: unsplash("1505843513577-22bb7d21e455"),
+    listingCount: 3,
+    blurb: "Where two seas meet, framed in white and blue.",
+  },
+  {
+    id: "dest-essaouira",
+    slug: "essaouira",
+    name: "Essaouira",
+    country: "Morocco",
+    imageUrl: unsplash("1583608205776-bfd35f0d9f83"),
+    listingCount: 3,
+    blurb: "Windswept ramparts and salt air on the coast.",
+  },
+  {
+    id: "dest-agadir",
+    slug: "agadir",
+    name: "Agadir",
+    country: "Morocco",
+    imageUrl: unsplash("1570214476695-19bd467e6f7a"),
+    listingCount: 3,
+    blurb: "Wide beaches and modern villas along the bay.",
+  },
+  {
+    id: "dest-chefchaouen",
+    slug: "chefchaouen",
+    name: "Chefchaouen",
+    country: "Morocco",
+    imageUrl: unsplash("1544984243-ec57ea16fe25"),
+    listingCount: 3,
+    blurb: "The blue city, cradled in the Rif mountains.",
+  },
+];

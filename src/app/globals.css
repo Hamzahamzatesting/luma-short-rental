@@ -1,26 +1,160 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
+/*
+  LUMA brand tokens — "The Lit Archway".
+  Midnight/Ivory is the default (dark) theme, not an opt-in dark mode.
+  Light sections use the .theme-light class instead of next-themes.
+*/
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+
+  --color-midnight: #0b0f14;
+  --color-navy: #111827;
+  --color-gold: #d4af37;
+  --color-beige: #e9e2d6;
+  --color-ivory: #faf1f2;
+
+  --font-sans: var(--font-montserrat);
+  --font-serif: var(--font-playfair);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-playfair);
+
+  --tracking-label: 0.16em;
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Default theme: Midnight / Ivory, gold as the only accent */
+:root {
+  --background: #0b0f14;
+  --foreground: #faf1f2;
+  --card: #111827;
+  --card-foreground: #faf1f2;
+  --popover: #111827;
+  --popover-foreground: #faf1f2;
+  --primary: #d4af37;
+  --primary-foreground: #0b0f14;
+  --secondary: #111827;
+  --secondary-foreground: #faf1f2;
+  --muted: #111827;
+  --muted-foreground: rgba(250, 241, 242, 0.64);
+  --accent: #d4af37;
+  --accent-foreground: #0b0f14;
+  --destructive: oklch(0.66 0.2 25);
+  --border: rgba(250, 241, 242, 0.12);
+  --input: rgba(250, 241, 242, 0.16);
+  --ring: rgba(212, 175, 55, 0.55);
+  --radius: 0.5rem;
+
+  --chart-1: #d4af37;
+  --chart-2: #e9e2d6;
+  --chart-3: #faf1f2;
+  --chart-4: #111827;
+  --chart-5: #0b0f14;
+  --sidebar: #111827;
+  --sidebar-foreground: #faf1f2;
+  --sidebar-primary: #d4af37;
+  --sidebar-primary-foreground: #0b0f14;
+  --sidebar-accent: #0b0f14;
+  --sidebar-accent-foreground: #faf1f2;
+  --sidebar-border: rgba(250, 241, 242, 0.12);
+  --sidebar-ring: rgba(212, 175, 55, 0.55);
+}
+
+/* Opt-in light section (Warm Beige / Ivory) — wrap with <Section variant="light"> */
+.theme-light {
+  --background: #faf1f2;
+  --foreground: #0b0f14;
+  --card: #e9e2d6;
+  --card-foreground: #0b0f14;
+  --popover: #faf1f2;
+  --popover-foreground: #0b0f14;
+  --primary: #d4af37;
+  --primary-foreground: #0b0f14;
+  --secondary: #e9e2d6;
+  --secondary-foreground: #0b0f14;
+  --muted: #e9e2d6;
+  --muted-foreground: rgba(11, 15, 20, 0.62);
+  --accent: #d4af37;
+  --accent-foreground: #0b0f14;
+  --border: rgba(11, 15, 20, 0.1);
+  --input: rgba(11, 15, 20, 0.14);
+  --ring: rgba(212, 175, 55, 0.55);
+}
+
+/* Opt-in deep navy section — a darker beat between midnight sections */
+.theme-navy {
+  --background: #111827;
+  --foreground: #faf1f2;
+  --card: #0b0f14;
+  --card-foreground: #faf1f2;
+  --popover: #111827;
+  --popover-foreground: #faf1f2;
+  --muted: #0b0f14;
+  --muted-foreground: rgba(250, 241, 242, 0.64);
+  --border: rgba(250, 241, 242, 0.12);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-serif;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .label-eyebrow {
+    @apply font-sans text-xs uppercase tracking-label text-gold;
+  }
 }
