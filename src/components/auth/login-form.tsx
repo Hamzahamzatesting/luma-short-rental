@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { signInWithPassword, signInWithGoogle } from "@/lib/actions/auth";
+import { signInWithPassword } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,19 +35,6 @@ export function LoginForm() {
 
         <Button type="submit" size="xl" disabled={pending} className="mt-2">
           {pending ? "Signing in…" : "Sign In"}
-        </Button>
-      </form>
-
-      <div className="flex items-center gap-3 text-xs uppercase tracking-label text-muted-foreground">
-        <span className="h-px flex-1 bg-border" />
-        or
-        <span className="h-px flex-1 bg-border" />
-      </div>
-
-      <form action={signInWithGoogle}>
-        <input type="hidden" name="redirect" value={redirectTo} />
-        <Button type="submit" variant="outline" size="xl" className="w-full">
-          Continue with Google
         </Button>
       </form>
 

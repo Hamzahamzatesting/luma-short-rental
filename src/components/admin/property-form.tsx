@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, type ReactNode } from "react";
+import { useActionState, useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MediaUploader } from "@/components/admin/media-uploader";
+import { AddHostDialog } from "@/components/admin/add-host-dialog";
 import type { ListingFormState } from "@/lib/actions/admin/listings";
 import type { Amenity, Destination, Host, Listing } from "@/lib/data/types";
 
@@ -25,6 +26,31 @@ interface PropertyFormProps {
   hosts: Host[];
   amenities: Amenity[];
   action: (prevState: ListingFormState, formData: FormData) => Promise<ListingFormState>;
+}
+
+// base-ui's <Select.Value> renders the raw stored value unless given a
+// render function — it can't infer a SelectItem's label from an
+// uncontrolled `defaultValue` on first paint, so these back that lookup.
+const STATUS_LABELS = { draft: "Draft", published: "Published", archived: "Archived" };
+const CANCELLATION_LABELS = { flexible: "Flexible", moderate: "Moderate", strict: "Strict" };
+
+// React resets a `<form action>`'s uncontrolled fields on every submission,
+// even ones that come back with a validation error — the action echoes
+// back what was submitted (`state.values`) and these helpers read it back
+// out, taking priority over the listing's saved values.
+function pick(state: ListingFormState, name: string): string | undefined {
+  const v = state?.values?.[name];
+  if (v === undefined) return undefined;
+  return Array.isArray(v) ? v[0] : v;
+}
+function pickArray(state: ListingFormState, name: string): string[] | undefined {
+  const v = state?.values?.[name];
+  if (v === undefined) return undefined;
+  return Array.isArray(v) ? v : [v];
+}
+function pickBool(state: ListingFormState, name: string, fallback: boolean): boolean {
+  if (!state?.values) return fallback;
+  return pick(state, name) === "on";
 }
 
 function Field({
@@ -65,12 +91,27 @@ function BoolField({
 
 export function PropertyForm({ listing, destinations, hosts, amenities, action }: PropertyFormProps) {
   const [state, formAction, pending] = useActionState<ListingFormState, FormData>(action, undefined);
+  // Forces the (uncontrolled) fields below to remount and re-read their
+  // defaultValue/defaultChecked from the latest `state` after React's
+  // automatic post-submit form reset — see the `pick*` helpers above.
+  const formKey = state ? JSON.stringify(state.values ?? {}) : "initial";
+
+  // The host select is controlled (not remount-keyed like the rest of the
+  // form) so a host added mid-session via AddHostDialog survives a failed
+  // submission instead of vanishing when the Tabs subtree remounts.
+  const [hostOptions, setHostOptions] = useState<Pick<Host, "id" | "name">[]>(hosts);
+  const [selectedHostId, setSelectedHostId] = useState(pick(state, "hostId") ?? listing?.hostId ?? "");
+  useEffect(() => {
+    const recovered = pick(state, "hostId");
+    if (recovered) setSelectedHostId(recovered);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
       {listing ? <input type="hidden" name="id" value={listing.id} /> : null}
 
-      <Tabs defaultValue="basics">
+      <Tabs defaultValue="basics" key={formKey}>
         <TabsList>
           <TabsTrigger value="basics">Basics</TabsTrigger>
           <TabsTrigger value="location">Location &amp; Capacity</TabsTrigger>
@@ -82,13 +123,15 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
 
         <TabsContent value="basics" keepMounted className="flex flex-col gap-4 pt-4">
           <Field label="Title" htmlFor="title">
-            <Input id="title" name="title" defaultValue={listing?.title} required minLength={3} />
+            <Input id="title" name="title" defaultValue={pick(state, "title") ?? listing?.title} required minLength={3} />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Destination" htmlFor="destinationId">
-              <Select name="destinationId" defaultValue={listing?.destinationId}>
+              <Select name="destinationId" defaultValue={pick(state, "destinationId") ?? listing?.destinationId}>
                 <SelectTrigger id="destinationId" className="w-full">
-                  <SelectValue placeholder="Choose a destination" />
+                  <SelectValue placeholder="Choose a destination">
+                    {(value: string | null) => destinations.find((d) => d.id === value)?.name ?? "Choose a destination"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {destinations.map((d) => (
@@ -100,52 +143,68 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
               </Select>
             </Field>
             <Field label="Host" htmlFor="hostId">
-              <Select name="hostId" defaultValue={listing?.hostId}>
-                <SelectTrigger id="hostId" className="w-full">
-                  <SelectValue placeholder="Choose a host" />
-                </SelectTrigger>
-                <SelectContent>
-                  {hosts.map((h) => (
-                    <SelectItem key={h.id} value={h.id}>
-                      {h.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select name="hostId" value={selectedHostId} onValueChange={(v) => setSelectedHostId(v as string)}>
+                  <SelectTrigger id="hostId" className="w-full">
+                    <SelectValue placeholder="Choose a host">
+                      {(value: string | null) => hostOptions.find((h) => h.id === value)?.name ?? "Choose a host"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hostOptions.map((h) => (
+                      <SelectItem key={h.id} value={h.id}>
+                        {h.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <AddHostDialog
+                  onCreated={(host) => {
+                    setHostOptions((prev) => [...prev, host]);
+                    setSelectedHostId(host.id);
+                  }}
+                />
+              </div>
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="City" htmlFor="city">
-              <Input id="city" name="city" defaultValue={listing?.city} required />
+              <Input id="city" name="city" defaultValue={pick(state, "city") ?? listing?.city} required />
             </Field>
             <Field label="Country" htmlFor="country">
-              <Input id="country" name="country" defaultValue={listing?.country ?? "Morocco"} required />
+              <Input id="country" name="country" defaultValue={pick(state, "country") ?? listing?.country ?? "Morocco"} required />
             </Field>
             <Field label="Neighborhood" htmlFor="neighborhood">
-              <Input id="neighborhood" name="neighborhood" defaultValue={listing?.neighborhood} />
+              <Input id="neighborhood" name="neighborhood" defaultValue={pick(state, "neighborhood") ?? listing?.neighborhood} />
             </Field>
           </div>
           <Field label="Short description" htmlFor="shortDescription">
             <Textarea
               id="shortDescription"
               name="shortDescription"
-              defaultValue={listing?.shortDescription}
+              defaultValue={pick(state, "shortDescription") ?? listing?.shortDescription}
               required
               rows={2}
             />
           </Field>
           <Field label="Full description" htmlFor="description">
-            <Textarea id="description" name="description" defaultValue={listing?.description} required rows={6} />
+            <Textarea
+              id="description"
+              name="description"
+              defaultValue={pick(state, "description") ?? listing?.description}
+              required
+              rows={6}
+            />
           </Field>
           <Field label="Status" htmlFor="status">
-            <Select name="status" defaultValue={listing?.status ?? "draft"}>
+            <Select name="status" defaultValue={pick(state, "status") ?? listing?.status ?? "draft"}>
               <SelectTrigger id="status" className="w-full sm:w-56">
-                <SelectValue />
+                <SelectValue>{(value: keyof typeof STATUS_LABELS | null) => (value ? STATUS_LABELS[value] : "")}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
+                <SelectItem value="draft">{STATUS_LABELS.draft}</SelectItem>
+                <SelectItem value="published">{STATUS_LABELS.published}</SelectItem>
+                <SelectItem value="archived">{STATUS_LABELS.archived}</SelectItem>
               </SelectContent>
             </Select>
           </Field>
@@ -154,32 +213,84 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
         <TabsContent value="location" keepMounted className="flex flex-col gap-4 pt-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Latitude" htmlFor="lat">
-              <Input id="lat" name="lat" type="number" step="any" defaultValue={listing?.location.lat} required />
+              <Input
+                id="lat"
+                name="lat"
+                type="number"
+                step="any"
+                defaultValue={pick(state, "lat") ?? listing?.location.lat}
+                required
+              />
             </Field>
             <Field label="Longitude" htmlFor="lng">
-              <Input id="lng" name="lng" type="number" step="any" defaultValue={listing?.location.lng} required />
+              <Input
+                id="lng"
+                name="lng"
+                type="number"
+                step="any"
+                defaultValue={pick(state, "lng") ?? listing?.location.lng}
+                required
+              />
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-4">
             <Field label="Max guests" htmlFor="maxGuests">
-              <Input id="maxGuests" name="maxGuests" type="number" min={1} defaultValue={listing?.maxGuests ?? 2} required />
+              <Input
+                id="maxGuests"
+                name="maxGuests"
+                type="number"
+                min={1}
+                defaultValue={pick(state, "maxGuests") ?? listing?.maxGuests ?? 2}
+                required
+              />
             </Field>
             <Field label="Bedrooms" htmlFor="bedrooms">
-              <Input id="bedrooms" name="bedrooms" type="number" min={0} defaultValue={listing?.bedrooms ?? 1} required />
+              <Input
+                id="bedrooms"
+                name="bedrooms"
+                type="number"
+                min={0}
+                defaultValue={pick(state, "bedrooms") ?? listing?.bedrooms ?? 1}
+                required
+              />
             </Field>
             <Field label="Bathrooms" htmlFor="bathrooms">
-              <Input id="bathrooms" name="bathrooms" type="number" min={0} defaultValue={listing?.bathrooms ?? 1} required />
+              <Input
+                id="bathrooms"
+                name="bathrooms"
+                type="number"
+                min={0}
+                defaultValue={pick(state, "bathrooms") ?? listing?.bathrooms ?? 1}
+                required
+              />
             </Field>
             <Field label="Square meters" htmlFor="squareMeters">
-              <Input id="squareMeters" name="squareMeters" type="number" min={0} defaultValue={listing?.squareMeters ?? 50} required />
+              <Input
+                id="squareMeters"
+                name="squareMeters"
+                type="number"
+                min={0}
+                defaultValue={pick(state, "squareMeters") ?? listing?.squareMeters ?? 50}
+                required
+              />
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Check-in time" htmlFor="checkInTime">
-              <Input id="checkInTime" name="checkInTime" defaultValue={listing?.checkInTime ?? "3:00 PM"} required />
+              <Input
+                id="checkInTime"
+                name="checkInTime"
+                defaultValue={pick(state, "checkInTime") ?? listing?.checkInTime ?? "3:00 PM"}
+                required
+              />
             </Field>
             <Field label="Check-out time" htmlFor="checkOutTime">
-              <Input id="checkOutTime" name="checkOutTime" defaultValue={listing?.checkOutTime ?? "11:00 AM"} required />
+              <Input
+                id="checkOutTime"
+                name="checkOutTime"
+                defaultValue={pick(state, "checkOutTime") ?? listing?.checkOutTime ?? "11:00 AM"}
+                required
+              />
             </Field>
           </div>
         </TabsContent>
@@ -187,7 +298,14 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
         <TabsContent value="pricing" keepMounted className="flex flex-col gap-4 pt-4">
           <div className="grid gap-4 sm:grid-cols-3">
             <Field label="Nightly price (MAD)" htmlFor="priceAmount">
-              <Input id="priceAmount" name="priceAmount" type="number" min={0} defaultValue={listing?.pricePerNight.amount} required />
+              <Input
+                id="priceAmount"
+                name="priceAmount"
+                type="number"
+                min={0}
+                defaultValue={pick(state, "priceAmount") ?? listing?.pricePerNight.amount}
+                required
+              />
             </Field>
             <Field label="Weekend price (MAD)" htmlFor="weekendPriceAmount">
               <Input
@@ -195,7 +313,7 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
                 name="weekendPriceAmount"
                 type="number"
                 min={0}
-                defaultValue={listing?.weekendPricePerNight?.amount}
+                defaultValue={pick(state, "weekendPriceAmount") ?? listing?.weekendPricePerNight?.amount}
               />
             </Field>
             <Field label="Cleaning fee (MAD)" htmlFor="cleaningFeeAmount">
@@ -204,7 +322,7 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
                 name="cleaningFeeAmount"
                 type="number"
                 min={0}
-                defaultValue={listing?.cleaningFee.amount}
+                defaultValue={pick(state, "cleaningFeeAmount") ?? listing?.cleaningFee.amount}
                 required
               />
             </Field>
@@ -216,18 +334,23 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
                 name="securityDepositAmount"
                 type="number"
                 min={0}
-                defaultValue={listing?.securityDeposit?.amount}
+                defaultValue={pick(state, "securityDepositAmount") ?? listing?.securityDeposit?.amount}
               />
             </Field>
             <Field label="Cancellation policy" htmlFor="cancellationPolicy">
-              <Select name="cancellationPolicy" defaultValue={listing?.cancellationPolicy}>
+              <Select
+                name="cancellationPolicy"
+                defaultValue={pick(state, "cancellationPolicy") ?? listing?.cancellationPolicy}
+              >
                 <SelectTrigger id="cancellationPolicy" className="w-full">
-                  <SelectValue placeholder="Choose a policy" />
+                  <SelectValue placeholder="Choose a policy">
+                    {(value: keyof typeof CANCELLATION_LABELS | null) => (value ? CANCELLATION_LABELS[value] : "Choose a policy")}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="flexible">Flexible</SelectItem>
-                  <SelectItem value="moderate">Moderate</SelectItem>
-                  <SelectItem value="strict">Strict</SelectItem>
+                  <SelectItem value="flexible">{CANCELLATION_LABELS.flexible}</SelectItem>
+                  <SelectItem value="moderate">{CANCELLATION_LABELS.moderate}</SelectItem>
+                  <SelectItem value="strict">{CANCELLATION_LABELS.strict}</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
@@ -238,13 +361,17 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
                 type="number"
                 min={0}
                 max={100}
-                defaultValue={listing?.luxuryScore ?? 70}
+                defaultValue={pick(state, "luxuryScore") ?? listing?.luxuryScore ?? 70}
               />
             </Field>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <BoolField name="isInstantBook" label="Instant book" defaultChecked={listing?.isInstantBook ?? false} />
-            <BoolField name="isFeatured" label="Featured on homepage" defaultChecked={listing?.isFeatured ?? false} />
+            <BoolField name="isInstantBook" label="Instant book" defaultChecked={pickBool(state, "isInstantBook", listing?.isInstantBook ?? false)} />
+            <BoolField
+              name="isFeatured"
+              label="Featured on homepage"
+              defaultChecked={pickBool(state, "isFeatured", listing?.isFeatured ?? false)}
+            />
           </div>
         </TabsContent>
 
@@ -257,7 +384,7 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
                   <Checkbox
                     name="amenityIds"
                     value={a.id}
-                    defaultChecked={listing?.amenityIds.includes(a.id)}
+                    defaultChecked={(pickArray(state, "amenityIds") ?? listing?.amenityIds ?? []).includes(a.id)}
                   />
                   {a.label}
                 </label>
@@ -265,18 +392,18 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <BoolField name="isPetFriendly" label="Pet friendly" defaultChecked={listing?.isPetFriendly ?? false} />
-            <BoolField name="hasPool" label="Pool" defaultChecked={listing?.hasPool ?? false} />
-            <BoolField name="hasWifi" label="WiFi" defaultChecked={listing?.hasWifi ?? true} />
-            <BoolField name="hasParking" label="Parking" defaultChecked={listing?.hasParking ?? false} />
-            <BoolField name="hasSeaView" label="Sea view" defaultChecked={listing?.hasSeaView ?? false} />
+            <BoolField name="isPetFriendly" label="Pet friendly" defaultChecked={pickBool(state, "isPetFriendly", listing?.isPetFriendly ?? false)} />
+            <BoolField name="hasPool" label="Pool" defaultChecked={pickBool(state, "hasPool", listing?.hasPool ?? false)} />
+            <BoolField name="hasWifi" label="WiFi" defaultChecked={pickBool(state, "hasWifi", listing?.hasWifi ?? true)} />
+            <BoolField name="hasParking" label="Parking" defaultChecked={pickBool(state, "hasParking", listing?.hasParking ?? false)} />
+            <BoolField name="hasSeaView" label="Sea view" defaultChecked={pickBool(state, "hasSeaView", listing?.hasSeaView ?? false)} />
           </div>
           <Field label="House rules (one per line)" htmlFor="houseRules">
             <Textarea
               id="houseRules"
               name="houseRules"
               rows={5}
-              defaultValue={listing?.houseRules.join("\n")}
+              defaultValue={pick(state, "houseRules") ?? listing?.houseRules.join("\n")}
               placeholder="No smoking indoors&#10;Quiet hours from 10pm to 8am"
             />
           </Field>
@@ -284,10 +411,15 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
 
         <TabsContent value="seo" keepMounted className="flex flex-col gap-4 pt-4">
           <Field label="SEO title" htmlFor="seoTitle">
-            <Input id="seoTitle" name="seoTitle" defaultValue={listing?.seoTitle} />
+            <Input id="seoTitle" name="seoTitle" defaultValue={pick(state, "seoTitle") ?? listing?.seoTitle} />
           </Field>
           <Field label="SEO description" htmlFor="seoDescription">
-            <Textarea id="seoDescription" name="seoDescription" rows={3} defaultValue={listing?.seoDescription} />
+            <Textarea
+              id="seoDescription"
+              name="seoDescription"
+              rows={3}
+              defaultValue={pick(state, "seoDescription") ?? listing?.seoDescription}
+            />
           </Field>
         </TabsContent>
 

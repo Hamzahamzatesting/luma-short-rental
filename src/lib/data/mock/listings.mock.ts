@@ -74,7 +74,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "A restored 19th-century riad with a private plunge pool and rooftop terrace.",
     description:
-      "Hidden behind an unmarked door in the heart of the medina, Riad Sable d'Or pairs traditional zellige tilework with quietly modern interiors. Four suites open onto a central courtyard, and a rooftop terrace looks out over the rooftops of Marrakech toward the Atlas Mountains.",
+      "Behind an unmarked door in the heart of the medina, the city's noise gives way to running water and birdsong. Riad Sable d'Or pairs traditional zellige tilework with quietly modern interiors; four suites open onto a central courtyard, and a rooftop terrace catches the last light over the Atlas Mountains — the kind of golden hour that makes you forget to check the time.",
     hostId: "host-yasmine",
     rating: 4.94,
     reviewCount: 128,
@@ -108,7 +108,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "A palm grove estate with an infinity pool facing the Atlas Mountains.",
     description:
-      "Set within a private palm grove on the edge of the city, Villa Atlas View offers six ensuite bedrooms, manicured gardens and an infinity pool that appears to spill toward the mountains at dusk. A resident housekeeper and chef can be arranged through LUMA concierge.",
+      "The palm grove closes in around the drive, and the city falls away entirely. Villa Atlas View offers six ensuite bedrooms, gardens kept lush against the dust of the plain, and an infinity pool that seems to spill straight into the Atlas Mountains at dusk. A resident housekeeper and private chef can be arranged through LUMA concierge, for guests who'd rather not lift a finger.",
     hostId: "host-yasmine",
     rating: 4.89,
     reviewCount: 76,
@@ -142,7 +142,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "An intimate two-suite riad steps from the Kasbah mosque.",
     description:
-      "Dar Étoile is a compact, exquisitely restored house near the Kasbah, favoring quiet luxury over scale. Two suites, a plunge fountain courtyard and a small rooftop for evening mint tea make it an ideal base for a couple or close friends.",
+      "Slip through a weathered cedar door and the noise of the Kasbah falls away. Dar Étoile favors quiet luxury over scale — two suites, a fountain murmuring in the courtyard, and a small rooftop where evening mint tea is poured as the call to prayer drifts over the rooftops. Built for two, or a small circle of close friends who'd rather linger than sightsee.",
     hostId: "host-yasmine",
     rating: 4.82,
     reviewCount: 54,
@@ -176,7 +176,7 @@ const RAW: RawListing[] = [
     seaView: true,
     shortDescription: "Art Deco villa in Anfa with ocean views and a private pool.",
     description:
-      "A 1930s Art Deco villa in Casablanca's Anfa hills, restored with period detail intact and a discreetly modern kitchen and pool deck. Sweeping Atlantic views extend from the primary suite terrace.",
+      "Up in Casablanca's Anfa hills, this 1930s Art Deco villa still carries its original period detail — restored, not replaced, with a discreetly modern kitchen and pool deck slipped in behind it. From the primary suite terrace, the Atlantic stretches out in full, uninterrupted view.",
     hostId: "host-lea",
     rating: 4.91,
     reviewCount: 63,
@@ -210,7 +210,7 @@ const RAW: RawListing[] = [
     seaView: true,
     shortDescription: "A sleek top-floor apartment overlooking the Corniche.",
     description:
-      "Floor-to-ceiling glass frames the Atlantic from every room of this top-floor apartment above the Corniche. Minimalist interiors in warm oak and stone let the ocean light do the talking.",
+      "Floor-to-ceiling glass frames the Atlantic from every room of this top-floor apartment above the Corniche, the light shifting from silver to gold as the day turns over. Interiors in warm oak and stone stay deliberately quiet, so the ocean is always the first thing you notice.",
     hostId: "host-lea",
     rating: 4.76,
     reviewCount: 41,
@@ -244,7 +244,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "A design-forward pied-à-terre in the Gauthier arts district.",
     description:
-      "Maison des Arts sits above a quiet street in Gauthier, furnished with a considered mix of Moroccan craft and contemporary design. Ideal for guests who want to be close to Casablanca's galleries and cafés.",
+      "Above a quiet, tree-lined street in Gauthier, Maison des Arts pairs Moroccan craft with a contemporary hand — plaster walls, brass fittings, and light that moves slowly across the room through the day. A pied-à-terre for guests who'd rather spend the afternoon between a gallery and a café than on a highway to the coast.",
     hostId: "host-lea",
     rating: 4.7,
     reviewCount: 29,
@@ -278,7 +278,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "A garden riad tucked inside Rabat's historic medina walls.",
     description:
-      "Riad Jardin Secret centers on a citrus-scented courtyard garden, with three suites finished in hand-carved plaster and cedar. Its rooftop looks toward the Kasbah of the Udayas and the mouth of the Bou Regreg.",
+      "A citrus-scented courtyard garden sits at the heart of Riad Jardin Secret, three suites finished in hand-carved plaster and cedar arranged quietly around it. Climb to the rooftop in the evening and the Kasbah of the Udayas catches the light, the Bou Regreg widening toward the sea just beyond.",
     hostId: "host-omar",
     rating: 4.88,
     reviewCount: 47,
@@ -312,7 +312,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "A walled garden villa in Rabat's diplomatic quarter.",
     description:
-      "Set behind mature gardens in leafy Souissi, Villa des Jardins offers a private pool, generous family living spaces, and the kind of quiet that's rare so close to the capital's embassies and ministries.",
+      "Behind a high garden wall in leafy Souissi, the noise of the capital gives way to birdsong and the soft splash of the pool. Villa des Jardins was built for unhurried mornings — generous family rooms, shaded terraces, and a stillness that's rare this close to the embassies and ministries just beyond the gate.",
     hostId: "host-omar",
     rating: 4.8,
     reviewCount: 33,
@@ -346,7 +346,7 @@ const RAW: RawListing[] = [
     seaView: true,
     shortDescription: "A river-view apartment overlooking the Bou Regreg estuary.",
     description:
-      "Maison Bou Regreg looks across the river to Salé, with a small rooftop perfect for watching the sun set behind the Hassan Tower. Understated, comfortable, and walkable to the medina.",
+      "From the rooftop, the Bou Regreg opens out toward Salé, the Hassan Tower catching the last light of the day. Maison Bou Regreg is unfussy and quietly comfortable — the kind of base that lets the view and an easy walk into the medina do most of the talking.",
     hostId: "host-omar",
     rating: 4.65,
     reviewCount: 22,
@@ -381,7 +381,7 @@ const RAW: RawListing[] = [
     seaView: true,
     shortDescription: "A hilltop estate on Tangier's Old Mountain with Strait of Gibraltar views.",
     description:
-      "Perched above the Strait of Gibraltar on Tangier's storied Old Mountain, Villa du Détroit commands views across to Spain on a clear day. Terraced gardens step down to an infinity pool; interiors mix Andalusian tile with mid-century furniture.",
+      "High on Tangier's storied Old Mountain, Villa du Détroit looks straight across the Strait of Gibraltar — Spain a low silhouette on a clear day, ships tracing the same route sailors have followed for centuries. Terraced gardens step down to an infinity pool; interiors mix Andalusian tile with mid-century furniture in a house that feels equal parts private estate and quiet retreat.",
     hostId: "host-karim",
     rating: 4.95,
     reviewCount: 88,
@@ -415,7 +415,7 @@ const RAW: RawListing[] = [
     seaView: true,
     shortDescription: "A whitewashed Kasbah house with a rooftop over the Strait.",
     description:
-      "Dar Kasbah sits within Tangier's fortified Kasbah, a whitewashed house of three suites with a rooftop terrace overlooking the port and the Strait of Gibraltar beyond.",
+      "Inside Tangier's fortified Kasbah, thick whitewashed walls keep Dar Kasbah cool and hushed through the day. Three suites open onto a rooftop where the view does the rest — ships tracing the Strait of Gibraltar, Spain a pale outline across the water at dusk.",
     hostId: "host-karim",
     rating: 4.84,
     reviewCount: 51,
@@ -449,7 +449,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "A calm two-suite riad in the leafy Marshan district.",
     description:
-      "Riad Atlantique offers a quiet retreat in Marshan's embassy district, a short walk from the cliffs above the Atlantic. Simple, comfortable, and well suited to longer stays.",
+      "Marshan moves at its own pace — plane trees, embassy gates, the Atlantic somewhere past the rooftops. Riad Atlantique settles into that quiet: two simple, sunlit suites and an easy walk to the cliffs, built less for a quick stopover than for the kind of stay where the days start to blur pleasantly together.",
     hostId: "host-karim",
     rating: 4.6,
     reviewCount: 18,
@@ -483,7 +483,7 @@ const RAW: RawListing[] = [
     seaView: true,
     shortDescription: "A fortified townhouse against the ramparts, facing the Atlantic.",
     description:
-      "Built into Essaouira's 18th-century ramparts, Villa des Remparts frames the Atlantic through thick stone windows. A rooftop fireplace makes cool coastal evenings a highlight of any stay.",
+      "Built directly into Essaouira's 18th-century ramparts, Villa des Remparts frames the Atlantic through thick stone windows worn smooth by centuries of salt wind. When the coastal evenings turn cool, the rooftop fireplace turns them into the best part of the day.",
     hostId: "host-yasmine",
     rating: 4.9,
     reviewCount: 67,
@@ -517,7 +517,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "A breezy medina house named for Essaouira's Atlantic winds.",
     description:
-      "Dar du Vent is a light-filled house deep in Essaouira's medina, two floors of whitewashed rooms and blue shutters around a small interior courtyard.",
+      "Named for the Atlantic wind that funnels through Essaouira's narrow streets, Dar du Vent catches the light early and holds it all day. Two floors of whitewashed rooms and blue-shuttered windows wrap a small interior courtyard — a quiet, sheltered centre to a house built for slowing down between walks through the medina.",
     hostId: "host-yasmine",
     rating: 4.72,
     reviewCount: 26,
@@ -551,7 +551,7 @@ const RAW: RawListing[] = [
     seaView: true,
     shortDescription: "A dune-side villa south of Essaouira with a heated pool.",
     description:
-      "Just south of Essaouira near Diabat, Maison Océan sits among the dunes with an unbroken view of the Atlantic. A heated pool and fireplace make it comfortable across seasons.",
+      "Just south of Essaouira near Diabat, Maison Océan sits among the dunes with nothing but sea grass and an unbroken view of the Atlantic between you and the water. A heated pool and fireplace keep it comfortable whatever the season, whether you've come for the wind or to escape it.",
     hostId: "host-yasmine",
     rating: 4.87,
     reviewCount: 39,
@@ -585,7 +585,7 @@ const RAW: RawListing[] = [
     seaView: true,
     shortDescription: "A modern villa overlooking Agadir Bay with a rooftop pool.",
     description:
-      "Clean architectural lines and a rooftop infinity pool overlooking Agadir Bay define this five-bedroom villa in Founty, moments from the marina and the beach promenade.",
+      "Clean architectural lines and a rooftop infinity pool overlooking Agadir Bay define this five-bedroom villa in Founty — the kind of quiet, modern design that lets the bay itself be the view, moments from the marina and the beach promenade below.",
     hostId: "host-karim",
     rating: 4.88,
     reviewCount: 58,
@@ -619,7 +619,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "A sunlit apartment in Talborjt, close to the souk.",
     description:
-      "Dar Soleil is a bright two-bedroom apartment in the Talborjt hills above Agadir, an easy walk to the souk el had and a short drive to the beach.",
+      "Set into the Talborjt hills above Agadir, Dar Soleil holds onto the sun from early morning — bright rooms, simple lines, a view down toward the souk. An easy, unpretentious base for guests who want the beach ten minutes away and the everyday rhythm of the city right outside the door.",
     hostId: "host-karim",
     rating: 4.58,
     reviewCount: 16,
@@ -653,7 +653,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "A palm-shaded family villa with a private garden pool.",
     description:
-      "Set among mature palms in Cité Suisse, Villa des Palmiers offers a private garden and pool, three bedrooms and easy access to Agadir's golf courses and beaches.",
+      "Mature palms shade the garden at Villa des Palmiers, their fronds moving overhead through most of the afternoon. Three bedrooms, a private pool, and easy access to Agadir's golf courses and beaches make it an easy, unhurried base for a family who wants space without the formality.",
     hostId: "host-karim",
     rating: 4.75,
     reviewCount: 24,
@@ -687,7 +687,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "A blue-washed house in the heart of the blue city.",
     description:
-      "Dar Bleue sits among Chefchaouen's famous indigo-washed streets, two suites and a rooftop terrace with views over the Rif mountains and the medina's rooftops below.",
+      "Dar Bleue sits among Chefchaouen's famous indigo-washed streets, the same deep blue climbing its own walls and stairwells. Two suites and a rooftop terrace look out over the medina's rooftops and the Rif mountains beyond — a small house that feels like part of the color itself.",
     hostId: "host-omar",
     rating: 4.92,
     reviewCount: 61,
@@ -721,7 +721,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "A mountainside house at the edge of the medina by the spring.",
     description:
-      "Maison du Rif sits where the medina meets the mountains, near the Ras El Maa spring. Three simple, elegant suites and a terrace built for watching the hills turn gold at sunset.",
+      "Maison du Rif sits at the exact point where the medina gives way to the mountains, close enough to the Ras El Maa spring to hear it running. Three simple, elegant suites and a terrace built for one purpose — watching the hills turn gold as the sun drops behind them.",
     hostId: "host-omar",
     rating: 4.81,
     reviewCount: 30,
@@ -755,7 +755,7 @@ const RAW: RawListing[] = [
     seaView: false,
     shortDescription: "The most storied address in the blue city, fully restored.",
     description:
-      "Riad Indigo occupies a landmark house in Chefchaouen's oldest quarter, restored over two years with hand-mixed indigo plaster and reclaimed cedar. LUMA's concierge team is on call throughout your stay.",
+      "Riad Indigo occupies a landmark house in Chefchaouen's oldest quarter, restored over two patient years with hand-mixed indigo plaster and reclaimed cedar — every wall carrying the faint, deliberate imperfection of work done by hand. LUMA's concierge team stays on call throughout your stay, so the only thing left to do is notice the light change on the blue.",
     hostId: "host-omar",
     rating: 4.96,
     reviewCount: 44,

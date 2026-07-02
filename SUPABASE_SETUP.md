@@ -34,6 +34,7 @@ In the Supabase dashboard's **SQL Editor**, run each file in `supabase/migration
 10. `0010_listings_admin_fields.sql`
 11. `0011_bookings_admin_lifecycle.sql`
 12. `0012_media_storage.sql`
+13. `0013_admin_email_allowlist.sql`
 
 Then run `supabase/seed.sql` to populate the catalog (21 listings, 7 destinations, 5 hosts, 84 reviews, 6 testimonials, 6 FAQs — transcribed from the Phase 1 mock data). If you ever change the mock fixtures and want to regenerate it: `npx tsx scripts/generate-seed.ts > supabase/seed.sql`.
 
@@ -75,15 +76,21 @@ The sandbox sender (`onboarding@resend.dev`) works immediately with no setup, bu
 
 ## 9. Admin dashboard (Phase 3)
 
-Migrations `0009`–`0012` add an admin role, a `listing-media` Storage bucket (public read, admin-only write), and the extra listing/booking fields the `/admin` dashboard needs.
+Migrations `0009`–`0013` add an admin role, a `listing-media` Storage bucket (public read, admin-only write), and the extra listing/booking fields the `/admin` dashboard needs.
 
-1. **Promote your first admin**: sign up normally through the app, then in the SQL Editor run:
+1. **Grant admin access by email, ahead of time** — in the SQL Editor:
    ```sql
-   update profiles set role = 'admin' where id = '<your-user-uuid>';
+   insert into admin_emails (email) values ('someone@example.com');
    ```
-   (Find the UUID in **Authentication → Users**.) There's no bootstrap admin — someone has to run this once by hand, and only the service-role client can change `role` after that (a trigger blocks a signed-in user from promoting themselves).
+   Then create that person's account however you like — **Authentication → Add User** in the Supabase dashboard (set a password directly, no email step needed), or have them sign up normally through the app. Either way, their `profiles.role` is set to `'admin'` the moment their account is created — no follow-up step.
+
+   This only affects *new* accounts. To promote someone who already signed up before being allowlisted:
+   ```sql
+   update profiles set role = 'admin' where id = '<their-user-uuid>';
+   ```
+   (Find the UUID in **Authentication → Users**.) Either way, only the service-role client can set `role` — a trigger blocks a signed-in user from promoting themselves, even via the allowlist trick (it only runs at account-creation time).
 2. **Verify the bucket**: **Storage** should show a `listing-media` bucket (public). Property image/video uploads in the admin dashboard go there.
-3. Once promoted, sign in and visit `/admin`.
+3. Once granted, sign in and visit `/admin`.
 
 ## What to expect once this is done
 

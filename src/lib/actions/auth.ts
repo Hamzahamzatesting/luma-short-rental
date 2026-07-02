@@ -74,24 +74,6 @@ export async function signInWithPassword(
   redirect(typeof redirectTo === "string" && redirectTo ? redirectTo : "/");
 }
 
-export async function signInWithGoogle(formData: FormData) {
-  const supabase = await createClient();
-  const origin = await siteOrigin();
-  const redirectTo = formData.get("redirect");
-  const next = typeof redirectTo === "string" && redirectTo ? redirectTo : "/";
-
-  // Dead until Google OAuth is configured in Supabase Dashboard > Authentication > Providers.
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}` },
-  });
-
-  if (error || !data.url) {
-    redirect(`/login?error=${encodeURIComponent(error?.message ?? "Google sign-in failed")}`);
-  }
-  redirect(data.url);
-}
-
 export async function requestPasswordReset(
   _prevState: FormState,
   formData: FormData

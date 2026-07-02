@@ -49,14 +49,14 @@ async function getUpcoming(field: "check_in" | "check_out", days = 7): Promise<A
 
   const { data } = await supabase
     .from("bookings")
-    .select("*, listing:listings(slug, title, images), profile:profiles(full_name)")
+    .select("*, listing:listings(slug, title, images)")
     .gte(field, today)
     .lte(field, until)
     .not("status", "in", "(cancelled,refunded)")
     .order(field, { ascending: true })
     .limit(10);
 
-  return ((data ?? []) as unknown as Array<{
+  const rows = (data ?? []) as unknown as Array<{
     id: string;
     listing_id: string;
     user_id: string;
@@ -68,15 +68,17 @@ async function getUpcoming(field: "check_in" | "check_out", days = 7): Promise<A
     status: AdminBookingSummary["status"];
     created_at: string;
     listing: { slug: string; title: string; images: string[] } | null;
-    profile: { full_name: string | null } | null;
-  }>).map((row) => ({
+  }>;
+  const names = await getProfileNames(rows.map((r) => r.user_id));
+
+  return rows.map((row) => ({
     id: row.id,
     listingId: row.listing_id,
     listingSlug: row.listing?.slug ?? "",
     listingTitle: row.listing?.title ?? "Listing",
     listingImage: row.listing?.images?.[0] ?? "",
     guestId: row.user_id,
-    guestName: row.profile?.full_name ?? "Guest",
+    guestName: names.get(row.user_id) ?? "Guest",
     checkIn: row.check_in,
     checkOut: row.check_out,
     guests: row.guests,
@@ -125,7 +127,7 @@ async function getRecentCustomers(limit = 5): Promise<RecentCustomer[]> {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("bookings")
-    .select("user_id, total, status, created_at, profile:profiles(full_name)")
+    .select("user_id, total, status, created_at")
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -134,8 +136,8 @@ async function getRecentCustomers(limit = 5): Promise<RecentCustomer[]> {
     total: number;
     status: string;
     created_at: string;
-    profile: { full_name: string | null } | null;
   }>;
+  const names = await getProfileNames(rows.map((r) => r.user_id));
 
   const byGuest = new Map<string, RecentCustomer>();
   for (const row of rows) {
@@ -147,16 +149,15 @@ async function getRecentCustomers(limit = 5): Promise<RecentCustomer[]> {
     } else {
       byGuest.set(row.user_id, {
         id: row.user_id,
-        name: row.profile?.full_name ?? "Guest",
+        name: names.get(row.user_id) ?? "Guest",
         stayCount: 1,
         totalSpent: { amount: isRevenue ? Number(row.total) : 0, currency: "MAD" },
         lastBookingAt: row.created_at,
       });
     }
-    if (byGuest.size >= limit) break;
   }
 
-  return Array.from(byGuest.values());
+  return Array.from(byGuest.values()).slice(0, limit);
 }
 
 export interface RecentReview {
@@ -193,13 +194,21 @@ async function getRecentReviews(limit = 5): Promise<RecentReview[]> {
   }));
 }
 
+export interface CalendarEvent {
+  bookingId: string;
+  listingTitle: string;
+  guestName: string;
+  kind: "check-in" | "check-out";
+}
+
 export interface CalendarDay {
   date: string;
   checkIns: number;
   checkOuts: number;
+  events: CalendarEvent[];
 }
 
-/** Backs the dashboard's compact "Calendar Overview" widget. */
+/** Backs the dashboard's compact, clickable "Calendar Overview" widget. */
 export async function getCalendarOverview(month: number, year: number): Promise<CalendarDay[]> {
   const supabase = createAdminClient();
   const start = new Date(year, month, 1);
@@ -207,32 +216,55 @@ export async function getCalendarOverview(month: number, year: number): Promise<
   const startIso = format(start, "yyyy-MM-dd");
   const endIso = format(end, "yyyy-MM-dd");
 
+  const EVENT_SELECT = "id, user_id, check_in, check_out, listing:listings(title)";
   const [{ data: checkIns }, { data: checkOuts }] = await Promise.all([
     supabase
       .from("bookings")
-      .select("check_in")
+      .select(EVENT_SELECT)
       .gte("check_in", startIso)
       .lte("check_in", endIso)
       .not("status", "in", "(cancelled,refunded)"),
     supabase
       .from("bookings")
-      .select("check_out")
+      .select(EVENT_SELECT)
       .gte("check_out", startIso)
       .lte("check_out", endIso)
       .not("status", "in", "(cancelled,refunded)"),
   ]);
 
+  type EventRow = {
+    id: string;
+    user_id: string;
+    check_in: string;
+    check_out: string;
+    listing: { title: string } | null;
+  };
+  const allRows = [...((checkIns ?? []) as unknown as EventRow[]), ...((checkOuts ?? []) as unknown as EventRow[])];
+  const names = await getProfileNames(allRows.map((r) => r.user_id));
+
   const byDate = new Map<string, CalendarDay>();
-  for (const row of checkIns ?? []) {
-    const key = row.check_in as string;
-    const day = byDate.get(key) ?? { date: key, checkIns: 0, checkOuts: 0 };
+  for (const row of (checkIns ?? []) as unknown as EventRow[]) {
+    const key = row.check_in;
+    const day = byDate.get(key) ?? { date: key, checkIns: 0, checkOuts: 0, events: [] };
     day.checkIns += 1;
+    day.events.push({
+      bookingId: row.id,
+      listingTitle: row.listing?.title ?? "Listing",
+      guestName: names.get(row.user_id) ?? "Guest",
+      kind: "check-in",
+    });
     byDate.set(key, day);
   }
-  for (const row of checkOuts ?? []) {
-    const key = row.check_out as string;
-    const day = byDate.get(key) ?? { date: key, checkIns: 0, checkOuts: 0 };
+  for (const row of (checkOuts ?? []) as unknown as EventRow[]) {
+    const key = row.check_out;
+    const day = byDate.get(key) ?? { date: key, checkIns: 0, checkOuts: 0, events: [] };
     day.checkOuts += 1;
+    day.events.push({
+      bookingId: row.id,
+      listingTitle: row.listing?.title ?? "Listing",
+      guestName: names.get(row.user_id) ?? "Guest",
+      kind: "check-out",
+    });
     byDate.set(key, day);
   }
   return Array.from(byDate.values());

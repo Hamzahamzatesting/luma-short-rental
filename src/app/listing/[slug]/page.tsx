@@ -9,8 +9,12 @@ import { HouseRules } from "@/components/listing/house-rules";
 import { HostCard } from "@/components/listing/host-card";
 import { ReviewsSection } from "@/components/listing/reviews-section";
 import { NearbyAttractions } from "@/components/listing/nearby-attractions";
-import { StaticCalendar } from "@/components/listing/static-calendar";
+import { LuxuryCalendar } from "@/components/listing/luxury-calendar";
 import { SimilarProperties } from "@/components/listing/similar-properties";
+import { SectionDivider } from "@/components/listing/section-divider";
+import { PropertyHighlights } from "@/components/listing/property-highlights";
+import { WhyGuestsLove } from "@/components/listing/why-guests-love";
+import { StorySection } from "@/components/listing/story-section";
 import { Reveal } from "@/components/motion/reveal";
 import { Separator } from "@/components/ui/separator";
 import { Users, BedDouble, Bath, Ruler } from "lucide-react";
@@ -22,6 +26,7 @@ import {
 } from "@/lib/data/listings";
 import { getHostById } from "@/lib/data/hosts";
 import { getReviewsForListing } from "@/lib/data/reviews";
+import { getPropertyHighlights, getWhyGuestsLoveThis, getStoryContent } from "@/lib/listing-editorial";
 
 interface ListingPageProps {
   params: Promise<{ slug: string }>;
@@ -54,6 +59,11 @@ export default async function ListingPage({ params }: ListingPageProps) {
     getBookedDateRangesForListing(listing.id),
   ]);
 
+  const highlights = getPropertyHighlights(listing);
+  const whyGuestsLove = getWhyGuestsLoveThis(listing, host);
+  const story = getStoryContent(listing);
+  const storyImage = listing.images[1] ?? listing.images[0];
+
   return (
     <>
       <Navbar />
@@ -71,7 +81,7 @@ export default async function ListingPage({ params }: ListingPageProps) {
           </Reveal>
 
           <div className="mt-12 grid grid-cols-1 gap-12 lg:grid-cols-[1fr_380px]">
-            <div className="flex flex-col gap-10">
+            <div className="flex flex-col gap-12">
               <Reveal>
                 <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
                   <span className="inline-flex items-center gap-2">
@@ -90,24 +100,39 @@ export default async function ListingPage({ params }: ListingPageProps) {
                 <Separator className="mt-6" />
               </Reveal>
 
-              <Reveal>
-                <p className="text-base leading-relaxed text-foreground/90">
-                  {listing.description}
-                </p>
-              </Reveal>
+              <div className="flex flex-col gap-8">
+                <Reveal>
+                  <p className="font-serif text-xl leading-relaxed text-foreground/90 first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:text-6xl first-letter:leading-[0.8] first-letter:text-gold md:text-[1.35rem]">
+                    {listing.description}
+                  </p>
+                </Reveal>
+
+                <Reveal delay={0.05}>
+                  <PropertyHighlights highlights={highlights} />
+                </Reveal>
+              </div>
+
+              <SectionDivider />
 
               <Reveal>
-                <h2 className="mb-5 font-serif text-xl text-foreground">Amenities</h2>
+                <p className="label-eyebrow mb-5">The Details</p>
+                <h2 className="mb-6 font-serif text-2xl text-foreground">Amenities</h2>
                 <AmenitiesList amenityIds={listing.amenityIds} />
               </Reveal>
 
-              <Reveal>
-                <h2 className="mb-5 font-serif text-xl text-foreground">Availability</h2>
-                <StaticCalendar bookedRanges={bookedRanges} />
-              </Reveal>
+              <WhyGuestsLove title={listing.title} bullets={whyGuestsLove} />
+
+              <SectionDivider />
 
               <Reveal>
-                <h2 className="mb-5 font-serif text-xl text-foreground">House Rules</h2>
+                <h2 className="mb-6 font-serif text-2xl text-foreground">Availability</h2>
+                <LuxuryCalendar bookedRanges={bookedRanges} />
+              </Reveal>
+
+              <SectionDivider />
+
+              <Reveal>
+                <h2 className="mb-6 font-serif text-2xl text-foreground">House Rules</h2>
                 <HouseRules
                   rules={listing.houseRules}
                   checkInTime={listing.checkInTime}
@@ -121,8 +146,10 @@ export default async function ListingPage({ params }: ListingPageProps) {
                 </Reveal>
               )}
 
+              <SectionDivider />
+
               <Reveal>
-                <h2 className="mb-5 font-serif text-xl text-foreground">Reviews</h2>
+                <h2 className="mb-6 font-serif text-2xl text-foreground">Reviews</h2>
                 <ReviewsSection
                   reviews={reviews}
                   rating={listing.rating}
@@ -130,8 +157,10 @@ export default async function ListingPage({ params }: ListingPageProps) {
                 />
               </Reveal>
 
+              <SectionDivider />
+
               <Reveal>
-                <h2 className="mb-5 font-serif text-xl text-foreground">Nearby</h2>
+                <h2 className="mb-6 font-serif text-2xl text-foreground">Nearby</h2>
                 <NearbyAttractions attractions={listing.nearbyAttractions} />
               </Reveal>
             </div>
@@ -142,7 +171,16 @@ export default async function ListingPage({ params }: ListingPageProps) {
           </div>
         </div>
 
-        <div className="mt-20">
+        <div className="mt-24">
+          <StorySection
+            image={storyImage}
+            title={listing.title}
+            heading={story.heading}
+            quote={story.quote}
+          />
+        </div>
+
+        <div className="mt-4">
           <SimilarProperties listings={similarListings} />
         </div>
       </main>

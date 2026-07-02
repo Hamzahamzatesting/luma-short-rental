@@ -1,16 +1,21 @@
+"use client";
+
+import Link from "next/link";
 import { eachDayOfInterval, endOfMonth, format, getDay, isSameMonth, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { CalendarDay } from "@/lib/data/admin/dashboard";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
-/** Dashboard's "Calendar Overview" widget — a read-only month grid of check-in/out density. Not the full availability manager. */
+/** Dashboard's "Calendar Overview" widget — click a day to see its check-ins/check-outs. Not the full availability manager. */
 export function MiniCalendar({ month, year, days }: { month: number; year: number; days: CalendarDay[] }) {
   const monthStart = startOfMonth(new Date(year, month, 1));
   const monthEnd = endOfMonth(monthStart);
   const cells = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const leadingBlanks = getDay(monthStart);
   const byDate = new Map(days.map((d) => [d.date, d]));
+  const today = format(new Date(), "yyyy-MM-dd");
 
   return (
     <div>
@@ -27,23 +32,59 @@ export function MiniCalendar({ month, year, days }: { month: number; year: numbe
         {cells.map((date) => {
           const key = format(date, "yyyy-MM-dd");
           const day = byDate.get(key);
-          const isToday = isSameMonth(date, new Date()) && date.getDate() === new Date().getDate();
-          return (
+          const hasEvents = !!day && day.events.length > 0;
+          const isToday = isSameMonth(date, new Date()) && key === today;
+
+          const cell = (
             <div
-              key={key}
               className={cn(
-                "flex aspect-square flex-col items-center justify-center rounded-md text-xs",
-                isToday ? "ring-1 ring-gold" : ""
+                "flex aspect-square flex-col items-center justify-center rounded-md text-xs transition-colors",
+                isToday ? "ring-1 ring-gold" : "",
+                hasEvents ? "cursor-pointer hover:bg-muted" : ""
               )}
             >
               <span className="text-foreground">{date.getDate()}</span>
-              {day && (day.checkIns > 0 || day.checkOuts > 0) ? (
+              {hasEvents ? (
                 <span className="mt-0.5 flex gap-0.5">
-                  {day.checkIns > 0 ? <span className="size-1 rounded-full bg-emerald-500" title={`${day.checkIns} check-ins`} /> : null}
-                  {day.checkOuts > 0 ? <span className="size-1 rounded-full bg-blue-500" title={`${day.checkOuts} check-outs`} /> : null}
+                  {day!.checkIns > 0 ? <span className="size-1 rounded-full bg-emerald-500" /> : null}
+                  {day!.checkOuts > 0 ? <span className="size-1 rounded-full bg-blue-500" /> : null}
                 </span>
               ) : null}
             </div>
+          );
+
+          if (!hasEvents) return <div key={key}>{cell}</div>;
+
+          return (
+            <Popover key={key}>
+              <PopoverTrigger render={<button type="button" />}>{cell}</PopoverTrigger>
+              <PopoverContent className="w-64">
+                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                  {format(date, "EEEE, MMMM d")}
+                </p>
+                <div className="flex flex-col divide-y divide-border">
+                  {day!.events.map((event, i) => (
+                    <Link
+                      key={`${event.bookingId}-${event.kind}-${i}`}
+                      href={`/admin/bookings/${event.bookingId}`}
+                      className="flex items-center justify-between gap-2 py-1.5 text-sm first:pt-0 last:pb-0 hover:text-gold"
+                    >
+                      <span className="min-w-0 truncate">
+                        {event.listingTitle} &middot; {event.guestName}
+                      </span>
+                      <span
+                        className={cn(
+                          "shrink-0 text-[10px] tracking-wide uppercase",
+                          event.kind === "check-in" ? "text-emerald-500" : "text-blue-500"
+                        )}
+                      >
+                        {event.kind === "check-in" ? "In" : "Out"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           );
         })}
       </div>

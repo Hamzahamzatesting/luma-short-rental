@@ -105,7 +105,7 @@ export function BookingStatusControl({ booking }: { booking: AdminBookingDetail 
         <Label htmlFor="status">Set status</Label>
         <Select name="status" defaultValue={booking.status}>
           <SelectTrigger id="status" className="w-48">
-            <SelectValue />
+            <SelectValue>{(value: string | null) => value?.replace("_", " ") ?? ""}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {MANUAL_STATUSES.map((s) => (

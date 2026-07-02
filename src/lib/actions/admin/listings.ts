@@ -7,8 +7,24 @@ import { requireAdmin } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getListingByIdAdmin } from "@/lib/data/admin/listings";
 
-export type ListingFormState = { error?: string } | undefined;
+export type SubmittedValues = Record<string, string | string[]>;
+export type ListingFormState = { error?: string; values?: SubmittedValues } | undefined;
 export type ListingActionResult = { error: string } | { ok: true };
+
+/**
+ * React resets a `<form action>`'s uncontrolled fields on every submission —
+ * including ones that come back with a validation error — so the action
+ * echoes back what was submitted and the form re-hydrates from it instead
+ * of silently losing everything the admin just typed.
+ */
+function formDataToValues(formData: FormData): SubmittedValues {
+  const out: SubmittedValues = {};
+  for (const key of new Set(formData.keys())) {
+    const all = formData.getAll(key).map(String);
+    out[key] = all.length > 1 ? all : all[0];
+  }
+  return out;
+}
 
 function slugify(input: string): string {
   return input
@@ -19,6 +35,17 @@ function slugify(input: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+// Left-blank optional fields submit as "" (not absent) — coerced through
+// z.coerce.number() that becomes 0 (failing .positive()/.min()), and
+// z.enum().optional() rejects "" outright since it isn't undefined. Strip
+// empty strings before the real schema runs so "blank" reads as "omitted".
+const emptyToUndefined = (val: unknown) => (val === "" ? undefined : val);
+function optionalNumber<S extends { optional: () => z.ZodTypeAny }>(schema: S) {
+  return z.preprocess(emptyToUndefined, schema.optional());
+}
+const optionalEnum = <T extends [string, ...string[]]>(values: T) =>
+  z.preprocess(emptyToUndefined, z.enum(values).optional());
+
 const listingSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters."),
   destinationId: z.string().min(1, "Choose a destination."),
@@ -28,9 +55,9 @@ const listingSchema = z.object({
   lat: z.coerce.number(),
   lng: z.coerce.number(),
   priceAmount: z.coerce.number().positive("Nightly price must be greater than 0."),
-  weekendPriceAmount: z.coerce.number().positive().optional(),
+  weekendPriceAmount: optionalNumber(z.coerce.number().positive()),
   cleaningFeeAmount: z.coerce.number().min(0),
-  securityDepositAmount: z.coerce.number().min(0).optional(),
+  securityDepositAmount: optionalNumber(z.coerce.number().min(0)),
   maxGuests: z.coerce.number().int().min(1),
   bedrooms: z.coerce.number().int().min(0),
   bathrooms: z.coerce.number().int().min(0),
@@ -41,7 +68,7 @@ const listingSchema = z.object({
   checkOutTime: z.string().min(1),
   shortDescription: z.string().min(1, "Short description is required."),
   description: z.string().min(1, "Description is required."),
-  cancellationPolicy: z.enum(["flexible", "moderate", "strict"]).optional(),
+  cancellationPolicy: optionalEnum(["flexible", "moderate", "strict"]),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   status: z.enum(["draft", "published", "archived"]),
@@ -76,7 +103,10 @@ export async function createListing(
 
   const parsed = listingSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
+    return {
+      error: parsed.error.issues[0]?.message ?? "Please check the form and try again.",
+      values: formDataToValues(formData),
+    };
   }
   const v = parsed.data;
   const supabase = createAdminClient();
@@ -126,10 +156,11 @@ export async function createListing(
     .single();
 
   if (error) {
+    const values = formDataToValues(formData);
     if (error.code === "23505") {
-      return { error: "A listing with a very similar title/city already exists — try a more distinct title." };
+      return { error: "A listing with a very similar title/city already exists — try a more distinct title.", values };
     }
-    return { error: "Something went wrong creating the property. Please try again." };
+    return { error: "Something went wrong creating the property. Please try again.", values };
   }
 
   revalidatePath("/admin/properties");
@@ -147,7 +178,10 @@ export async function updateListing(
 
   const parsed = listingSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Please check the form and try again." };
+    return {
+      error: parsed.error.issues[0]?.message ?? "Please check the form and try again.",
+      values: formDataToValues(formData),
+    };
   }
   const v = parsed.data;
   const supabase = createAdminClient();
@@ -188,7 +222,10 @@ export async function updateListing(
     .eq("id", id);
 
   if (error) {
-    return { error: "Something went wrong saving the property. Please try again." };
+    return {
+      error: "Something went wrong saving the property. Please try again.",
+      values: formDataToValues(formData),
+    };
   }
 
   revalidatePath("/admin/properties");
