@@ -784,6 +784,7 @@ export const listingsMock: Listing[] = RAW.map((raw, index) => ({
   neighborhood: raw.neighborhood,
   location: { lat: raw.lat, lng: raw.lng },
   images: galleryFor(index, 6),
+  videos: [],
   pricePerNight: { amount: raw.price, currency: "MAD" },
   weekendPricePerNight: raw.weekendPrice
     ? { amount: raw.weekendPrice, currency: "MAD" }
@@ -811,7 +812,9 @@ export const listingsMock: Listing[] = RAW.map((raw, index) => ({
   rating: raw.rating,
   reviewCount: raw.reviewCount,
   nearbyAttractions: attractions(raw.attractions),
+  status: "published",
   createdAt: daysAgoToIso(raw.daysAgo),
+  updatedAt: daysAgoToIso(raw.daysAgo),
 }));
 
 export { hostsMock };

@@ -2,12 +2,17 @@
 
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getListingBySlug } from "@/lib/data/listings";
+import { canCancelBooking } from "@/lib/data/bookings";
 import { getResendClient, EMAIL_FROM } from "@/lib/email/client";
 import { bookingConfirmationEmail, bookingConfirmationSubject } from "@/lib/email/booking-confirmation";
+import { bookingCancellationEmail, bookingCancellationSubject } from "@/lib/email/booking-cancellation";
+import type { BookingStatus } from "@/lib/data/types";
 
 export type BookingFormState = { error?: string } | undefined;
+export type CancelBookingResult = { error: string } | { ok: true };
 
 const SERVICE_FEE_RATE = 0.08;
 
@@ -112,4 +117,84 @@ export async function createBooking(
   }
 
   redirect(`/bookings/${booking.id}/confirmation`);
+}
+
+export async function cancelBooking(
+  _prevState: CancelBookingResult | null,
+  formData: FormData
+): Promise<CancelBookingResult> {
+  const bookingId = formData.get("bookingId") as string;
+  if (!bookingId) return { error: "Missing booking." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?redirect=/bookings");
+
+  const { data: bookingRow } = await supabase
+    .from("bookings")
+    .select("id, status, check_in, check_out, listing:listings(title, city, images)")
+    .eq("id", bookingId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const booking = bookingRow as unknown as
+    | {
+        id: string;
+        status: BookingStatus;
+        check_in: string;
+        check_out: string;
+        listing: { title: string; city: string; images: string[] } | null;
+      }
+    | null;
+
+  if (!booking) return { error: "Booking not found." };
+  if (!canCancelBooking({ status: booking.status, checkIn: booking.check_in })) {
+    return {
+      error:
+        booking.status === "cancelled"
+          ? "This booking is already cancelled."
+          : "This stay has already started and can no longer be cancelled.",
+    };
+  }
+
+  const { error } = await supabase
+    .from("bookings")
+    .update({ status: "cancelled" })
+    .eq("id", bookingId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return { error: "Something went wrong cancelling your reservation. Please try again." };
+  }
+
+  // Best-effort — a failed email should never block a successful cancellation.
+  const listing = booking.listing;
+  if (user.email && listing) {
+    try {
+      const h = await headers();
+      const origin = h.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+      const resend = getResendClient();
+      await resend.emails.send({
+        from: EMAIL_FROM,
+        to: user.email,
+        subject: bookingCancellationSubject(listing.title),
+        html: bookingCancellationEmail({
+          listingTitle: listing.title,
+          listingImage: listing.images[0] ?? "",
+          listingCity: listing.city,
+          checkIn: booking.check_in,
+          checkOut: booking.check_out,
+          siteUrl: origin,
+        }),
+      });
+    } catch (emailError) {
+      console.error("Failed to send booking cancellation email:", emailError);
+    }
+  }
+
+  revalidatePath("/bookings");
+  revalidatePath(`/bookings/${bookingId}/confirmation`);
+  return { ok: true };
 }

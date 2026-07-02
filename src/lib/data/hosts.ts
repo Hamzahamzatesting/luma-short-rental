@@ -29,3 +29,9 @@ export async function getHostById(hostId: string): Promise<Host | null> {
   const { data } = await supabase.from("hosts").select("*").eq("id", hostId).maybeSingle();
   return data ? mapHostRow(data) : null;
 }
+
+export async function getHosts(): Promise<Host[]> {
+  const supabase = createPublicClient();
+  const { data } = await supabase.from("hosts").select("*").order("name");
+  return (data ?? []).map(mapHostRow);
+}

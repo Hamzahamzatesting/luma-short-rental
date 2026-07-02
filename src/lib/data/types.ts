@@ -53,6 +53,10 @@ export interface NearbyAttraction {
   category: string;
 }
 
+export type ListingStatus = "draft" | "published" | "archived";
+
+export type CancellationPolicy = "flexible" | "moderate" | "strict";
+
 export interface Listing {
   id: string;
   slug: string;
@@ -63,9 +67,11 @@ export interface Listing {
   neighborhood?: string;
   location: GeoPoint;
   images: string[];
+  videos: string[];
   pricePerNight: Money;
   weekendPricePerNight?: Money;
   cleaningFee: Money;
+  securityDeposit?: Money;
   maxGuests: number;
   bedrooms: number;
   bathrooms: number;
@@ -88,7 +94,12 @@ export interface Listing {
   rating: number;
   reviewCount: number;
   nearbyAttractions: NearbyAttraction[];
+  status: ListingStatus;
+  cancellationPolicy?: CancellationPolicy;
+  seoTitle?: string;
+  seoDescription?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface Testimonial {
@@ -106,7 +117,15 @@ export interface FaqItem {
   answer: string;
 }
 
-export type BookingStatus = "pending" | "confirmed" | "cancelled";
+export type BookingStatus =
+  | "pending"
+  | "awaiting_payment"
+  | "confirmed"
+  | "checked_in"
+  | "checked_out"
+  | "cancelled"
+  | "refunded"
+  | "completed";
 
 export interface Booking {
   id: string;
@@ -124,6 +143,18 @@ export interface Booking {
   serviceFee: Money;
   total: Money;
   status: BookingStatus;
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ProfileRole = "guest" | "admin";
+
+export interface Profile {
+  id: string;
+  fullName?: string;
+  avatarUrl?: string;
+  role: ProfileRole;
   createdAt: string;
 }
 

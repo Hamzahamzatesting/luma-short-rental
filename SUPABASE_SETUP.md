@@ -28,6 +28,12 @@ In the Supabase dashboard's **SQL Editor**, run each file in `supabase/migration
 4. `0004_profiles_and_auth_trigger.sql`
 5. `0005_rls_policies.sql`
 6. `0006_public_booked_ranges_view.sql`
+7. `0007_booking_cancellation.sql`
+8. `0008_account_deletion_cascade.sql`
+9. `0009_profiles_role.sql`
+10. `0010_listings_admin_fields.sql`
+11. `0011_bookings_admin_lifecycle.sql`
+12. `0012_media_storage.sql`
 
 Then run `supabase/seed.sql` to populate the catalog (21 listings, 7 destinations, 5 hosts, 84 reviews, 6 testimonials, 6 FAQs — transcribed from the Phase 1 mock data). If you ever change the mock fixtures and want to regenerate it: `npx tsx scripts/generate-seed.ts > supabase/seed.sql`.
 
@@ -67,6 +73,18 @@ RESEND_FROM_EMAIL=LUMA <onboarding@resend.dev>
 
 The sandbox sender (`onboarding@resend.dev`) works immediately with no setup, but mail providers often route it to spam since it's a shared domain used by many test apps — expect to find test emails in Spam and mark them "Not spam." **Before going live**, verify your own domain in Resend (Domains → Add Domain → add the TXT/CNAME records it gives you to your DNS), then change `RESEND_FROM_EMAIL` to `LUMA <bookings@yourdomain.com>` for reliable inbox delivery.
 
+## 9. Admin dashboard (Phase 3)
+
+Migrations `0009`–`0012` add an admin role, a `listing-media` Storage bucket (public read, admin-only write), and the extra listing/booking fields the `/admin` dashboard needs.
+
+1. **Promote your first admin**: sign up normally through the app, then in the SQL Editor run:
+   ```sql
+   update profiles set role = 'admin' where id = '<your-user-uuid>';
+   ```
+   (Find the UUID in **Authentication → Users**.) There's no bootstrap admin — someone has to run this once by hand, and only the service-role client can change `role` after that (a trigger blocks a signed-in user from promoting themselves).
+2. **Verify the bucket**: **Storage** should show a `listing-media` bucket (public). Property image/video uploads in the admin dashboard go there.
+3. Once promoted, sign in and visit `/admin`.
+
 ## What to expect once this is done
 
 - Home, Search, and every listing page will show the real seeded catalog instead of an empty state.
@@ -74,6 +92,6 @@ The sandbox sender (`onboarding@resend.dev`) works immediately with no setup, bu
 - Booking a listing requires being signed in, writes a real row to `bookings`, and is protected against double-booking at the database level (two people can't reserve overlapping dates for the same listing, even under concurrent requests).
 - `/bookings` shows your own reservations; the confirmation page at `/bookings/[id]/confirmation` shows the price breakdown.
 
-## Still out of scope for Phase 2
+## Still out of scope
 
-Payment processing, booking cancellation/modification, the admin CMS (Phase 3), and migrating photography off Unsplash into Supabase Storage.
+Payment processing; the availability calendar, pricing rules engine, customer CRM, review moderation, content CMS, media library, analytics, granular admin roles, and third-party integrations (all deferred parts of Phase 3).

@@ -5,8 +5,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "randomuser.me" },
-      // Add "<project-ref>.supabase.co" here once listing photography
-      // moves into Supabase Storage — not needed while seed data uses Unsplash URLs.
+      { protocol: "https", hostname: "*.supabase.co" },
     ],
   },
 };

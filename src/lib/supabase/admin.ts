@@ -3,8 +3,9 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Service-role Supabase client — bypasses RLS entirely.
- * Never import this into a "use client" file or any Server Action reachable
- * by end users. Reserved for Phase 3 admin tooling; unused for now.
+ * Never import this into a "use client" file. Every Server Action that uses
+ * it (see src/lib/actions/account.ts) must independently verify the caller's
+ * identity via the cookie-scoped client before touching another user's row.
  */
 export function createAdminClient() {
   return createSupabaseClient(

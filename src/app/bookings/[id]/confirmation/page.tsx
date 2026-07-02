@@ -7,7 +7,8 @@ import { Footer } from "@/components/layout/footer";
 import { Section } from "@/components/layout/section";
 import { Reveal } from "@/components/motion/reveal";
 import { Button } from "@/components/ui/button";
-import { getBookingById } from "@/lib/data/bookings";
+import { getBookingById, canCancelBooking } from "@/lib/data/bookings";
+import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog";
 
 interface ConfirmationPageProps {
   params: Promise<{ id: string }>;
@@ -108,6 +109,12 @@ export default async function BookingConfirmationPage({ params }: ConfirmationPa
             <Button render={<Link href="/bookings">View My Bookings</Link>} nativeButton={false} variant="gold-outline" />
             <Button render={<Link href="/search">Explore More Stays</Link>} nativeButton={false} />
           </Reveal>
+
+          {canCancelBooking(booking) && (
+            <Reveal delay={0.2} className="mx-auto mt-4 flex max-w-xl justify-center">
+              <CancelBookingDialog bookingId={booking.id} listingTitle={booking.listingTitle} />
+            </Reveal>
+          )}
         </Section>
       </main>
       <Footer />

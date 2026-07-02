@@ -15,6 +15,7 @@ interface BookingRow {
   total: number;
   status: BookingStatus;
   created_at: string;
+  updated_at: string;
   listing: {
     slug: string;
     title: string;
@@ -41,6 +42,7 @@ function mapBookingRow(row: BookingRow): Booking {
     total: { amount: row.total, currency: "MAD" },
     status: row.status,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -79,4 +81,11 @@ export async function getBookingById(id: string): Promise<Booking | null> {
     .maybeSingle();
 
   return data ? mapBookingRow(data as unknown as BookingRow) : null;
+}
+
+/** Mirrors the "users cancel own bookings" RLS policy in 0007_booking_cancellation.sql. */
+export function canCancelBooking(booking: Pick<Booking, "status" | "checkIn">): boolean {
+  if (booking.status === "cancelled") return false;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  return booking.checkIn > todayStr;
 }

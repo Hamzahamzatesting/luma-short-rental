@@ -3,7 +3,7 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { getDestinationBySlug } from "./destinations";
 import type { Listing, NearbyAttraction, SearchFilters, SortOption } from "./types";
 
-interface ListingRow {
+export interface ListingRow {
   id: string;
   slug: string;
   title: string;
@@ -14,12 +14,15 @@ interface ListingRow {
   lat: number;
   lng: number;
   images: string[];
+  videos: string[];
   price_amount: number;
   price_currency: string;
   weekend_price_amount: number | null;
   weekend_price_currency: string | null;
   cleaning_fee_amount: number;
   cleaning_fee_currency: string;
+  security_deposit_amount: number | null;
+  security_deposit_currency: string | null;
   max_guests: number;
   bedrooms: number;
   bathrooms: number;
@@ -42,10 +45,15 @@ interface ListingRow {
   rating: number;
   review_count: number;
   nearby_attractions: NearbyAttraction[];
+  status: Listing["status"];
+  cancellation_policy: Listing["cancellationPolicy"] | null;
+  seo_title: string | null;
+  seo_description: string | null;
   created_at: string;
+  updated_at: string;
 }
 
-function mapListingRow(row: ListingRow): Listing {
+export function mapListingRow(row: ListingRow): Listing {
   return {
     id: row.id,
     slug: row.slug,
@@ -56,12 +64,17 @@ function mapListingRow(row: ListingRow): Listing {
     neighborhood: row.neighborhood ?? undefined,
     location: { lat: row.lat, lng: row.lng },
     images: row.images,
+    videos: row.videos ?? [],
     pricePerNight: { amount: row.price_amount, currency: row.price_currency as Listing["pricePerNight"]["currency"] },
     weekendPricePerNight:
       row.weekend_price_amount != null && row.weekend_price_currency
         ? { amount: row.weekend_price_amount, currency: row.weekend_price_currency as Listing["pricePerNight"]["currency"] }
         : undefined,
     cleaningFee: { amount: row.cleaning_fee_amount, currency: row.cleaning_fee_currency as Listing["pricePerNight"]["currency"] },
+    securityDeposit:
+      row.security_deposit_amount != null && row.security_deposit_currency
+        ? { amount: row.security_deposit_amount, currency: row.security_deposit_currency as Listing["pricePerNight"]["currency"] }
+        : undefined,
     maxGuests: row.max_guests,
     bedrooms: row.bedrooms,
     bathrooms: row.bathrooms,
@@ -84,7 +97,12 @@ function mapListingRow(row: ListingRow): Listing {
     rating: row.rating,
     reviewCount: row.review_count,
     nearbyAttractions: row.nearby_attractions,
+    status: row.status,
+    cancellationPolicy: row.cancellation_policy ?? undefined,
+    seoTitle: row.seo_title ?? undefined,
+    seoDescription: row.seo_description ?? undefined,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -110,6 +128,7 @@ export async function getFeaturedListings(limit = 6): Promise<Listing[]> {
   const { data } = await supabase
     .from("listings")
     .select("*")
+    .eq("status", "published")
     .eq("is_featured", true)
     .limit(limit);
   return (data ?? []).map(mapListingRow);
@@ -117,13 +136,18 @@ export async function getFeaturedListings(limit = 6): Promise<Listing[]> {
 
 export async function getListingBySlug(slug: string): Promise<Listing | null> {
   const supabase = createPublicClient();
-  const { data } = await supabase.from("listings").select("*").eq("slug", slug).maybeSingle();
+  const { data } = await supabase
+    .from("listings")
+    .select("*")
+    .eq("slug", slug)
+    .eq("status", "published")
+    .maybeSingle();
   return data ? mapListingRow(data) : null;
 }
 
 export async function searchListings(filters: SearchFilters = {}): Promise<Listing[]> {
   const supabase = createPublicClient();
-  let query = supabase.from("listings").select("*");
+  let query = supabase.from("listings").select("*").eq("status", "published");
 
   if (filters.destinationSlug) {
     const destination = await getDestinationBySlug(filters.destinationSlug);
@@ -174,6 +198,7 @@ export async function getSimilarListings(listingId: string, limit = 4): Promise<
     .from("listings")
     .select("*")
     .eq("destination_id", current.destination_id)
+    .eq("status", "published")
     .neq("id", listingId)
     .limit(limit);
   return (data ?? []).map(mapListingRow);
@@ -181,7 +206,7 @@ export async function getSimilarListings(listingId: string, limit = 4): Promise<
 
 export async function getAllListingSlugs(): Promise<string[]> {
   const supabase = createPublicClient();
-  const { data } = await supabase.from("listings").select("slug");
+  const { data } = await supabase.from("listings").select("slug").eq("status", "published");
   return (data ?? []).map((l) => l.slug as string);
 }
 
