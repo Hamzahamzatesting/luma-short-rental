@@ -2,21 +2,33 @@
 
 import { Calendar } from "@/components/ui/calendar";
 
-interface StaticCalendarProps {
-  blockedDates: string[];
+interface BookedRange {
+  start: string;
+  end: string;
 }
 
-/** Visual availability preview only — real availability/booking logic lands with Supabase in Phase 2. */
-export function StaticCalendar({ blockedDates }: StaticCalendarProps) {
-  const disabledDates = blockedDates.map((d) => new Date(d));
+interface StaticCalendarProps {
+  bookedRanges: BookedRange[];
+}
+
+/** Visual availability preview, sourced from real bookings (Supabase). */
+export function StaticCalendar({ bookedRanges }: StaticCalendarProps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  // check_out is exclusive (the '[)' stay_range convention), so the
+  // checkout day itself is bookable by the next guest — subtract one day.
+  const disabledRanges = bookedRanges.map(({ start, end }) => {
+    const to = new Date(end);
+    to.setDate(to.getDate() - 1);
+    return { from: new Date(start), to };
+  });
 
   return (
     <div>
       <Calendar
         numberOfMonths={2}
-        disabled={[{ before: today }, ...disabledDates]}
+        disabled={[{ before: today }, ...disabledRanges]}
         className="rounded-lg border border-border"
       />
       <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">

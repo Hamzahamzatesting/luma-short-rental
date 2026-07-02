@@ -1,74 +1,198 @@
 import "server-only";
-import { listingsMock } from "./mock/listings.mock";
-import { destinationsMock } from "./mock/destinations.mock";
-import type { Listing, SearchFilters } from "./types";
+import { createPublicClient } from "@/lib/supabase/public";
+import { getDestinationBySlug } from "./destinations";
+import type { Listing, NearbyAttraction, SearchFilters, SortOption } from "./types";
 
-function matchesFilters(listing: Listing, filters: SearchFilters): boolean {
-  if (filters.destinationSlug) {
-    const destination = destinationsMock.find((d) => d.slug === filters.destinationSlug);
-    if (!destination || listing.destinationId !== destination.id) return false;
-  }
-  if (filters.query) {
-    const q = filters.query.toLowerCase();
-    const haystack = `${listing.title} ${listing.city} ${listing.neighborhood ?? ""}`.toLowerCase();
-    if (!haystack.includes(q)) return false;
-  }
-  if (filters.guests && listing.maxGuests < filters.guests) return false;
-  if (filters.bedrooms && listing.bedrooms < filters.bedrooms) return false;
-  if (filters.bathrooms && listing.bathrooms < filters.bathrooms) return false;
-  if (filters.minPrice && listing.pricePerNight.amount < filters.minPrice) return false;
-  if (filters.maxPrice && listing.pricePerNight.amount > filters.maxPrice) return false;
-  if (filters.petFriendly && !listing.isPetFriendly) return false;
-  if (filters.seaView && !listing.hasSeaView) return false;
-  if (filters.instantBookOnly && !listing.isInstantBook) return false;
-  if (filters.amenityIds?.length) {
-    const hasAll = filters.amenityIds.every((id) => listing.amenityIds.includes(id));
-    if (!hasAll) return false;
-  }
-  return true;
+interface ListingRow {
+  id: string;
+  slug: string;
+  title: string;
+  destination_id: string;
+  city: string;
+  country: string;
+  neighborhood: string | null;
+  lat: number;
+  lng: number;
+  images: string[];
+  price_amount: number;
+  price_currency: string;
+  weekend_price_amount: number | null;
+  weekend_price_currency: string | null;
+  cleaning_fee_amount: number;
+  cleaning_fee_currency: string;
+  max_guests: number;
+  bedrooms: number;
+  bathrooms: number;
+  square_meters: number;
+  amenity_ids: string[];
+  luxury_score: number;
+  is_instant_book: boolean;
+  is_featured: boolean;
+  is_pet_friendly: boolean;
+  has_pool: boolean;
+  has_wifi: boolean;
+  has_parking: boolean;
+  has_sea_view: boolean;
+  short_description: string;
+  description: string;
+  house_rules: string[];
+  check_in_time: string;
+  check_out_time: string;
+  host_id: string;
+  rating: number;
+  review_count: number;
+  nearby_attractions: NearbyAttraction[];
+  created_at: string;
 }
 
-function sortListings(listings: Listing[], sort: SearchFilters["sort"]): Listing[] {
-  const sorted = [...listings];
+function mapListingRow(row: ListingRow): Listing {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    destinationId: row.destination_id,
+    city: row.city,
+    country: row.country,
+    neighborhood: row.neighborhood ?? undefined,
+    location: { lat: row.lat, lng: row.lng },
+    images: row.images,
+    pricePerNight: { amount: row.price_amount, currency: row.price_currency as Listing["pricePerNight"]["currency"] },
+    weekendPricePerNight:
+      row.weekend_price_amount != null && row.weekend_price_currency
+        ? { amount: row.weekend_price_amount, currency: row.weekend_price_currency as Listing["pricePerNight"]["currency"] }
+        : undefined,
+    cleaningFee: { amount: row.cleaning_fee_amount, currency: row.cleaning_fee_currency as Listing["pricePerNight"]["currency"] },
+    maxGuests: row.max_guests,
+    bedrooms: row.bedrooms,
+    bathrooms: row.bathrooms,
+    squareMeters: row.square_meters,
+    amenityIds: row.amenity_ids,
+    luxuryScore: row.luxury_score,
+    isInstantBook: row.is_instant_book,
+    isFeatured: row.is_featured,
+    isPetFriendly: row.is_pet_friendly,
+    hasPool: row.has_pool,
+    hasWifi: row.has_wifi,
+    hasParking: row.has_parking,
+    hasSeaView: row.has_sea_view,
+    shortDescription: row.short_description,
+    description: row.description,
+    houseRules: row.house_rules,
+    checkInTime: row.check_in_time,
+    checkOutTime: row.check_out_time,
+    hostId: row.host_id,
+    rating: row.rating,
+    reviewCount: row.review_count,
+    nearbyAttractions: row.nearby_attractions,
+    createdAt: row.created_at,
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function applySort(query: any, sort: SortOption) {
   switch (sort) {
     case "price-asc":
-      return sorted.sort((a, b) => a.pricePerNight.amount - b.pricePerNight.amount);
+      return query.order("price_amount", { ascending: true });
     case "price-desc":
-      return sorted.sort((a, b) => b.pricePerNight.amount - a.pricePerNight.amount);
+      return query.order("price_amount", { ascending: false });
     case "popularity":
-      return sorted.sort((a, b) => b.reviewCount - a.reviewCount);
+      return query.order("review_count", { ascending: false });
     case "luxury":
-      return sorted.sort((a, b) => b.luxuryScore - a.luxuryScore);
+      return query.order("luxury_score", { ascending: false });
     case "newest":
-      return sorted.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
     default:
-      return sorted;
+      return query.order("created_at", { ascending: false });
   }
 }
 
 export async function getFeaturedListings(limit = 6): Promise<Listing[]> {
-  return listingsMock.filter((l) => l.isFeatured).slice(0, limit);
+  const supabase = createPublicClient();
+  const { data } = await supabase
+    .from("listings")
+    .select("*")
+    .eq("is_featured", true)
+    .limit(limit);
+  return (data ?? []).map(mapListingRow);
 }
 
 export async function getListingBySlug(slug: string): Promise<Listing | null> {
-  return listingsMock.find((l) => l.slug === slug) ?? null;
+  const supabase = createPublicClient();
+  const { data } = await supabase.from("listings").select("*").eq("slug", slug).maybeSingle();
+  return data ? mapListingRow(data) : null;
 }
 
 export async function searchListings(filters: SearchFilters = {}): Promise<Listing[]> {
-  const filtered = listingsMock.filter((l) => matchesFilters(l, filters));
-  return sortListings(filtered, filters.sort ?? "newest");
+  const supabase = createPublicClient();
+  let query = supabase.from("listings").select("*");
+
+  if (filters.destinationSlug) {
+    const destination = await getDestinationBySlug(filters.destinationSlug);
+    if (!destination) return [];
+    query = query.eq("destination_id", destination.id);
+  }
+  if (filters.query) {
+    query = query.or(`title.ilike.%${filters.query}%,city.ilike.%${filters.query}%`);
+  }
+  if (filters.guests) query = query.gte("max_guests", filters.guests);
+  if (filters.bedrooms) query = query.gte("bedrooms", filters.bedrooms);
+  if (filters.bathrooms) query = query.gte("bathrooms", filters.bathrooms);
+  if (filters.minPrice) query = query.gte("price_amount", filters.minPrice);
+  if (filters.maxPrice) query = query.lte("price_amount", filters.maxPrice);
+  if (filters.petFriendly) query = query.eq("is_pet_friendly", true);
+  if (filters.seaView) query = query.eq("has_sea_view", true);
+  if (filters.instantBookOnly) query = query.eq("is_instant_book", true);
+  if (filters.amenityIds?.length) query = query.contains("amenity_ids", filters.amenityIds);
+
+  query = applySort(query, filters.sort ?? "newest");
+
+  const { data } = await query;
+  let listings = (data ?? []).map(mapListingRow);
+
+  if (filters.checkIn && filters.checkOut) {
+    const { data: overlapping } = await supabase
+      .from("booked_date_ranges")
+      .select("listing_id")
+      .lt("check_in", filters.checkOut)
+      .gt("check_out", filters.checkIn);
+    const blockedIds = new Set((overlapping ?? []).map((b) => b.listing_id as string));
+    listings = listings.filter((l) => !blockedIds.has(l.id));
+  }
+
+  return listings;
 }
 
 export async function getSimilarListings(listingId: string, limit = 4): Promise<Listing[]> {
-  const listing = listingsMock.find((l) => l.id === listingId);
-  if (!listing) return [];
-  return listingsMock
-    .filter((l) => l.id !== listingId && l.destinationId === listing.destinationId)
-    .slice(0, limit);
+  const supabase = createPublicClient();
+  const { data: current } = await supabase
+    .from("listings")
+    .select("destination_id")
+    .eq("id", listingId)
+    .maybeSingle();
+  if (!current) return [];
+
+  const { data } = await supabase
+    .from("listings")
+    .select("*")
+    .eq("destination_id", current.destination_id)
+    .neq("id", listingId)
+    .limit(limit);
+  return (data ?? []).map(mapListingRow);
 }
 
 export async function getAllListingSlugs(): Promise<string[]> {
-  return listingsMock.map((l) => l.slug);
+  const supabase = createPublicClient();
+  const { data } = await supabase.from("listings").select("slug");
+  return (data ?? []).map((l) => l.slug as string);
+}
+
+/** Booked (non-cancelled) date ranges for a listing, used to disable dates in StaticCalendar. */
+export async function getBookedDateRangesForListing(
+  listingId: string
+): Promise<{ start: string; end: string }[]> {
+  const supabase = createPublicClient();
+  const { data } = await supabase
+    .from("booked_date_ranges")
+    .select("check_in, check_out")
+    .eq("listing_id", listingId);
+  return (data ?? []).map((b) => ({ start: b.check_in as string, end: b.check_out as string }));
 }

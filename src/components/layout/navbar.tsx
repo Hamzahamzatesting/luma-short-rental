@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
+import { AuthMenu } from "@/components/layout/auth-menu";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -50,13 +51,14 @@ export function Navbar({ transparentAtTop = false }: NavbarProps) {
           ))}
         </nav>
 
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-4 md:flex">
           <Button
             render={<Link href="/search">Explore Stays</Link>}
             nativeButton={false}
             variant="default"
             size="lg"
           />
+          <AuthMenu />
         </div>
 
         <Sheet open={open} onOpenChange={setOpen}>
@@ -93,6 +95,9 @@ export function Navbar({ transparentAtTop = false }: NavbarProps) {
                 size="lg"
                 className="mt-2"
               />
+              <div className="mt-2">
+                <AuthMenu />
+              </div>
             </nav>
           </SheetContent>
         </Sheet>

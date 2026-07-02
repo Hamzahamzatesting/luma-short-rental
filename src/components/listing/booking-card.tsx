@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { createBooking } from "@/lib/actions/bookings";
 import type { Listing } from "@/lib/data/types";
 
 interface BookingCardProps {
@@ -23,21 +24,18 @@ function nightsBetween(checkIn: string, checkOut: string): number {
 }
 
 export function BookingCard({ listing }: BookingCardProps) {
+  const [state, formAction, pending] = useActionState(createBooking, undefined);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState("2");
-  const [confirmed, setConfirmed] = useState(false);
 
+  // Local math is a live preview only — the Server Action recomputes
+  // everything from a fresh DB fetch before it ever touches the database.
   const nights = nightsBetween(checkIn, checkOut);
   const subtotal = useMemo(() => nights * listing.pricePerNight.amount, [nights, listing]);
   const cleaningFee = nights > 0 ? listing.cleaningFee.amount : 0;
   const serviceFee = nights > 0 ? Math.round(subtotal * 0.08) : 0;
   const total = subtotal + cleaningFee + serviceFee;
-
-  function handleReserve(e: React.FormEvent) {
-    e.preventDefault();
-    setConfirmed(true);
-  }
 
   return (
     <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
@@ -49,7 +47,9 @@ export function BookingCard({ listing }: BookingCardProps) {
         <p className="text-sm text-muted-foreground">★ {listing.rating.toFixed(2)}</p>
       </div>
 
-      <form onSubmit={handleReserve} className="flex flex-col gap-3">
+      <form action={formAction} className="flex flex-col gap-3">
+        <input type="hidden" name="listingSlug" value={listing.slug} />
+
         <div className="grid grid-cols-2 gap-2 rounded-lg border border-border">
           <div className="flex flex-col gap-1 border-r border-border p-3">
             <label className="text-[0.65rem] font-medium uppercase tracking-label text-muted-foreground">
@@ -57,6 +57,7 @@ export function BookingCard({ listing }: BookingCardProps) {
             </label>
             <Input
               type="date"
+              name="checkIn"
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
               required
@@ -69,6 +70,7 @@ export function BookingCard({ listing }: BookingCardProps) {
             </label>
             <Input
               type="date"
+              name="checkOut"
               value={checkOut}
               onChange={(e) => setCheckOut(e.target.value)}
               required
@@ -93,16 +95,15 @@ export function BookingCard({ listing }: BookingCardProps) {
               ))}
             </SelectContent>
           </Select>
+          <input type="hidden" name="guests" value={guests} />
         </div>
 
-        <Button type="submit" size="xl" className="mt-2 w-full">
-          Reserve
+        <Button type="submit" size="xl" disabled={pending} className="mt-2 w-full">
+          {pending ? "Reserving…" : "Reserve"}
         </Button>
 
-        {confirmed && (
-          <p className="text-center text-xs text-muted-foreground">
-            Thank you — this is a preview experience. Real bookings open soon.
-          </p>
+        {state?.error && (
+          <p className="text-center text-xs text-destructive">{state.error}</p>
         )}
       </form>
 

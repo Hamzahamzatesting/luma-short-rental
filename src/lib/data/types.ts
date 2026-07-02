@@ -88,7 +88,6 @@ export interface Listing {
   rating: number;
   reviewCount: number;
   nearbyAttractions: NearbyAttraction[];
-  blockedDates: string[];
   createdAt: string;
 }
 
@@ -105,6 +104,27 @@ export interface FaqItem {
   id: string;
   question: string;
   answer: string;
+}
+
+export type BookingStatus = "pending" | "confirmed" | "cancelled";
+
+export interface Booking {
+  id: string;
+  listingId: string;
+  listingSlug: string;
+  listingTitle: string;
+  listingImage: string;
+  listingCity: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  nights: number;
+  pricePerNightSnapshot: Money;
+  cleaningFeeSnapshot: Money;
+  serviceFee: Money;
+  total: Money;
+  status: BookingStatus;
+  createdAt: string;
 }
 
 export type SortOption =

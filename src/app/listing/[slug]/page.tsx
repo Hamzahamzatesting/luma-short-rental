@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Users, BedDouble, Bath, Ruler } from "lucide-react";
 import {
   getAllListingSlugs,
+  getBookedDateRangesForListing,
   getListingBySlug,
   getSimilarListings,
 } from "@/lib/data/listings";
@@ -46,10 +47,11 @@ export default async function ListingPage({ params }: ListingPageProps) {
   const listing = await getListingBySlug(slug);
   if (!listing) notFound();
 
-  const [host, reviews, similarListings] = await Promise.all([
+  const [host, reviews, similarListings, bookedRanges] = await Promise.all([
     getHostById(listing.hostId),
     getReviewsForListing(listing.id),
     getSimilarListings(listing.id),
+    getBookedDateRangesForListing(listing.id),
   ]);
 
   return (
@@ -101,7 +103,7 @@ export default async function ListingPage({ params }: ListingPageProps) {
 
               <Reveal>
                 <h2 className="mb-5 font-serif text-xl text-foreground">Availability</h2>
-                <StaticCalendar blockedDates={listing.blockedDates} />
+                <StaticCalendar bookedRanges={bookedRanges} />
               </Reveal>
 
               <Reveal>

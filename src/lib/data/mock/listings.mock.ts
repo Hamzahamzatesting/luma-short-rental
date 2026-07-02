@@ -9,14 +9,6 @@ const DEFAULT_HOUSE_RULES = [
   "Please treat the home and staff with care",
 ];
 
-const DEFAULT_BLOCKED_DATES = [
-  "2026-07-14",
-  "2026-07-15",
-  "2026-07-16",
-  "2026-08-02",
-  "2026-08-03",
-];
-
 function attractions(items: [string, number, string][]): NearbyAttraction[] {
   return items.map(([name, distanceKm, category], i) => ({
     id: `${name.toLowerCase().replace(/\s+/g, "-")}-${i}`,
@@ -819,7 +811,6 @@ export const listingsMock: Listing[] = RAW.map((raw, index) => ({
   rating: raw.rating,
   reviewCount: raw.reviewCount,
   nearbyAttractions: attractions(raw.attractions),
-  blockedDates: DEFAULT_BLOCKED_DATES,
   createdAt: daysAgoToIso(raw.daysAgo),
 }));
 
