@@ -45,6 +45,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   }, []);
 
   function toggle(listingId: string) {
+    if (!loaded) return;
     if (!isAuthenticated) {
       router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
       return;

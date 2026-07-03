@@ -10,7 +10,7 @@ interface FavoriteButtonProps {
 }
 
 export function FavoriteButton({ listingId, className }: FavoriteButtonProps) {
-  const { favoriteIds, toggle } = useFavorites();
+  const { favoriteIds, toggle, loaded } = useFavorites();
   const favorited = favoriteIds.has(listingId);
 
   return (
@@ -18,13 +18,14 @@ export function FavoriteButton({ listingId, className }: FavoriteButtonProps) {
       type="button"
       aria-pressed={favorited}
       aria-label={favorited ? "Remove from favorites" : "Save to favorites"}
+      disabled={!loaded}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
         toggle(listingId);
       }}
       className={cn(
-        "flex size-8 items-center justify-center rounded-full bg-midnight/40 backdrop-blur-sm transition-colors hover:bg-midnight/60",
+        "flex size-8 items-center justify-center rounded-full bg-midnight/40 backdrop-blur-sm transition-colors hover:bg-midnight/60 disabled:opacity-50",
         className
       )}
     >
