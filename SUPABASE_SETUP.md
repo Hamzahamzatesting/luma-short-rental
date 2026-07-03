@@ -65,10 +65,14 @@ Supabase creates new tables with Row Level Security **off** by default. `0005_rl
 
 ## 7. Branded auth emails (Supabase)
 
-Supabase's default signup/reset-password emails are unbranded. Paste the branded versions into **Authentication → Email Templates**:
+Supabase's default auth emails are unbranded. Paste the branded versions into **Authentication → Emails → Templates**:
 
 - **Confirm signup** → paste `supabase/email-templates/confirm-signup.html`, subject `Confirm your email — LUMA`
 - **Reset Password** → paste `supabase/email-templates/reset-password.html`, subject `Reset your password — LUMA`
+- **Magic Link** → paste `supabase/email-templates/magic-link.html`, subject `Sign in to LUMA`
+- **Invite user** → paste `supabase/email-templates/invite.html`, subject `You've been invited to LUMA`
+- **Change Email Address** → paste `supabase/email-templates/email-change.html`, subject `Confirm your new email — LUMA`
+- **Reauthentication** → paste `supabase/email-templates/reauthentication.html`, subject `Your LUMA confirmation code`
 
 ## 8. Booking confirmation emails (Resend)
 
