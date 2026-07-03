@@ -33,16 +33,21 @@ export function Hero({ destinations }: HeroProps) {
       <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-midnight/65 to-transparent" />
 
       <RevealGroup className="relative mx-auto w-full max-w-7xl px-6 pb-20 pt-40 md:px-10 md:pb-24">
+        {/* The photo underneath this spot isn't reliably dark — a soft badge
+            behind the mark and eyebrow keeps both legible regardless of what
+            part of the image lands here, instead of relying on a shadow that
+            only works against certain backgrounds. */}
         <motion.div variants={revealItemVariants} className="mb-6 flex justify-center md:justify-start">
-          <ArchwayMark className="h-10 w-auto text-gold" />
+          <div className="flex size-14 items-center justify-center rounded-full bg-midnight/45 backdrop-blur-sm">
+            <ArchwayMark className="h-7 w-auto text-gold" />
+          </div>
         </motion.div>
 
-        <motion.p
-          variants={revealItemVariants}
-          className="mb-4 text-center text-xs font-medium uppercase tracking-label text-gold [text-shadow:0_1px_10px_rgba(11,15,20,0.7)] md:text-left"
-        >
-          Curated Stays &middot; Extraordinary Moments
-        </motion.p>
+        <motion.div variants={revealItemVariants} className="mb-4 flex justify-center md:justify-start">
+          <p className="inline-block rounded-full bg-midnight/45 px-4 py-1.5 text-center text-xs font-medium uppercase tracking-label text-gold backdrop-blur-sm">
+            Curated Stays &middot; Extraordinary Moments
+          </p>
+        </motion.div>
 
         <motion.h1
           variants={revealItemVariants}
