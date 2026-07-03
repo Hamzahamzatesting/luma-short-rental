@@ -92,6 +92,12 @@ export default async function AdminBookingDetailPage({ params }: { params: Promi
               <span className="text-foreground">Total</span>
               <span className="text-foreground">{money(booking.total.amount, booking.total.currency)}</span>
             </div>
+            {booking.refundPercent !== undefined ? (
+              <div className="flex justify-between text-gold">
+                <span>Refund owed (per cancellation policy)</span>
+                <span>{booking.refundPercent}%</span>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

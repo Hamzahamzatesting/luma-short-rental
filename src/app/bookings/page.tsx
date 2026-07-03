@@ -8,15 +8,22 @@ import { Section } from "@/components/layout/section";
 import { Reveal } from "@/components/motion/reveal";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import { getBookingsForUser, canCancelBooking } from "@/lib/data/bookings";
+import { getBookingsForUser, canCancelBooking, canReviewBooking } from "@/lib/data/bookings";
+import { getReviewedBookingIds } from "@/lib/data/reviews";
 import { CancelBookingDialog } from "@/components/bookings/cancel-booking-dialog";
+import { LeaveReviewDialog } from "@/components/bookings/leave-review-dialog";
 
 export const metadata: Metadata = { title: "My Bookings | LUMA" };
 
 const STATUS_STYLE: Record<string, string> = {
   confirmed: "text-gold border-gold/50",
   pending: "text-muted-foreground border-border",
+  awaiting_payment: "text-muted-foreground border-border",
+  checked_in: "text-gold border-gold/50",
+  checked_out: "text-foreground border-border",
+  completed: "text-foreground border-border",
   cancelled: "text-destructive border-destructive/40",
+  refunded: "text-destructive border-destructive/40",
 };
 
 export default async function BookingsPage() {
@@ -26,7 +33,7 @@ export default async function BookingsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login?redirect=/bookings");
 
-  const bookings = await getBookingsForUser();
+  const [bookings, reviewedBookingIds] = await Promise.all([getBookingsForUser(), getReviewedBookingIds()]);
 
   return (
     <>
@@ -90,7 +97,15 @@ export default async function BookingsPage() {
                         {booking.total.amount.toLocaleString()} MAD
                       </p>
                       {canCancelBooking(booking) && (
-                        <CancelBookingDialog bookingId={booking.id} listingTitle={booking.listingTitle} />
+                        <CancelBookingDialog
+                          bookingId={booking.id}
+                          listingTitle={booking.listingTitle}
+                          checkIn={booking.checkIn}
+                          cancellationPolicy={booking.listingCancellationPolicy}
+                        />
+                      )}
+                      {canReviewBooking(booking) && !reviewedBookingIds.has(booking.id) && (
+                        <LeaveReviewDialog bookingId={booking.id} listingTitle={booking.listingTitle} />
                       )}
                     </div>
                   </div>

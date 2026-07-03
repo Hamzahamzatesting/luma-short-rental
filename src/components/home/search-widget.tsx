@@ -43,7 +43,7 @@ export function SearchWidget({ destinations, className }: SearchWidgetProps) {
     <form
       onSubmit={handleSubmit}
       className={cn(
-        "grid w-full grid-cols-1 items-end gap-4 rounded-lg border border-ivory/15 bg-midnight/60 p-4 backdrop-blur-md sm:grid-cols-2",
+        "grid w-full grid-cols-1 items-end gap-4 rounded-lg border border-ivory/15 bg-midnight/60 p-4 backdrop-blur-md sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_0.9fr_auto] lg:gap-0 lg:divide-x lg:divide-ivory/15 lg:p-2",
         className
       )}
     >
@@ -107,7 +107,7 @@ export function SearchWidget({ destinations, className }: SearchWidgetProps) {
         </Select>
       </div>
 
-      <div className="px-1.5 py-1.5 sm:col-span-2">
+      <div className="px-1.5 py-1.5 lg:pl-3">
         <Button type="submit" size="xl" className="w-full gap-2">
           <Search size={16} />
           Explore Stays

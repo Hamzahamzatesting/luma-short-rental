@@ -40,7 +40,7 @@ export function PropertyCard({ listing, className, priority = false, layout = "g
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover transition-transform duration-500 ease-out group-hover/card:scale-105"
         />
-        <FavoriteButton className="absolute right-3 top-3" />
+        <FavoriteButton listingId={listing.id} className="absolute right-3 top-3" />
         {listing.isInstantBook && (
           <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-midnight/60 px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-label text-ivory backdrop-blur-sm">
             <Zap size={11} className="text-gold" />

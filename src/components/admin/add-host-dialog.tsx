@@ -19,13 +19,20 @@ export function AddHostDialog({ onCreated }: { onCreated: (host: { id: string; n
   const [state, formAction, pending] = useActionState<CreateHostState, FormData>(createHost, undefined);
   const formRef = useRef<HTMLFormElement>(null);
 
-  useEffect(() => {
+  // Close the dialog and hand the new host up on success — adjusted during
+  // render (not an effect) so it lands before the browser paints the stale,
+  // still-open dialog. The form-field reset stays in an effect since refs
+  // may only be read outside of render.
+  const [handledState, setHandledState] = useState(state);
+  if (state !== handledState) {
+    setHandledState(state);
     if (state && "ok" in state) {
       onCreated(state.host);
       setOpen(false);
-      formRef.current?.reset();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }
+  useEffect(() => {
+    if (state && "ok" in state) formRef.current?.reset();
   }, [state]);
 
   return (

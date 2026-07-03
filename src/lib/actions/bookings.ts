@@ -9,7 +9,10 @@ import { canCancelBooking } from "@/lib/data/bookings";
 import { getResendClient, EMAIL_FROM } from "@/lib/email/client";
 import { bookingConfirmationEmail, bookingConfirmationSubject } from "@/lib/email/booking-confirmation";
 import { bookingCancellationEmail, bookingCancellationSubject } from "@/lib/email/booking-cancellation";
-import type { BookingStatus } from "@/lib/data/types";
+import { adminNewBookingEmail, adminNewBookingSubject } from "@/lib/email/admin-new-booking";
+import { checkRateLimit, rateLimitMessage } from "@/lib/rate-limit";
+import { getCancellationTerms } from "@/lib/cancellation-policy";
+import type { BookingStatus, CancellationPolicy } from "@/lib/data/types";
 
 export type BookingFormState = { error?: string } | undefined;
 export type CancelBookingResult = { error: string } | { ok: true };
@@ -39,6 +42,9 @@ export async function createBooking(
     redirect(`/login?redirect=${encodeURIComponent(`/listing/${listingSlug}`)}`);
   }
 
+  const limit = await checkRateLimit(user.id, "create-booking", { max: 10, windowMinutes: 60 });
+  if (!limit.allowed) return { error: rateLimitMessage("booking", limit) };
+
   if (!checkIn || !checkOut) {
     return { error: "Please choose check-in and check-out dates." };
   }
@@ -55,6 +61,19 @@ export async function createBooking(
   }
   if (guests < 1 || guests > listing.maxGuests) {
     return { error: `This listing sleeps up to ${listing.maxGuests} guests.` };
+  }
+
+  // Blocked dates (maintenance, owner stays) aren't in the bookings table,
+  // so the exclusion constraint below can't catch them — checked separately.
+  const { data: blocks } = await supabase
+    .from("blocked_date_ranges")
+    .select("start_date")
+    .eq("listing_id", listing.id)
+    .lt("start_date", checkOut)
+    .gt("end_date", checkIn)
+    .limit(1);
+  if (blocks && blocks.length > 0) {
+    return { error: "Those dates aren't available for this property. Please choose different dates." };
   }
 
   const subtotal = nights * listing.pricePerNight.amount;
@@ -116,6 +135,34 @@ export async function createBooking(
     }
   }
 
+  // Best-effort — lets an operator know a booking exists without having to
+  // keep the dashboard open. Silently skipped if no address is configured.
+  if (process.env.ADMIN_NOTIFICATION_EMAIL) {
+    try {
+      const h = await headers();
+      const origin = h.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+      const resend = getResendClient();
+      await resend.emails.send({
+        from: EMAIL_FROM,
+        to: process.env.ADMIN_NOTIFICATION_EMAIL,
+        subject: adminNewBookingSubject(listing.title),
+        html: adminNewBookingEmail({
+          listingTitle: listing.title,
+          guestName: user.user_metadata?.full_name ?? "Guest",
+          guestEmail: user.email ?? "",
+          checkIn,
+          checkOut,
+          guests,
+          total,
+          currency: listing.pricePerNight.currency,
+          adminBookingUrl: `${origin}/admin/bookings/${booking.id}`,
+        }),
+      });
+    } catch (emailError) {
+      console.error("Failed to send admin new-booking notification:", emailError);
+    }
+  }
+
   redirect(`/bookings/${booking.id}/confirmation`);
 }
 
@@ -134,7 +181,7 @@ export async function cancelBooking(
 
   const { data: bookingRow } = await supabase
     .from("bookings")
-    .select("id, status, check_in, check_out, listing:listings(title, city, images)")
+    .select("id, status, check_in, check_out, listing:listings(title, city, images, cancellation_policy)")
     .eq("id", bookingId)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -145,7 +192,7 @@ export async function cancelBooking(
         status: BookingStatus;
         check_in: string;
         check_out: string;
-        listing: { title: string; city: string; images: string[] } | null;
+        listing: { title: string; city: string; images: string[]; cancellation_policy: CancellationPolicy | null } | null;
       }
     | null;
 
@@ -159,9 +206,11 @@ export async function cancelBooking(
     };
   }
 
+  const { refundPercent } = getCancellationTerms(booking.listing?.cancellation_policy ?? undefined, booking.check_in);
+
   const { error } = await supabase
     .from("bookings")
-    .update({ status: "cancelled" })
+    .update({ status: "cancelled", refund_percent: refundPercent })
     .eq("id", bookingId)
     .eq("user_id", user.id);
 

@@ -41,9 +41,28 @@ export async function generateMetadata({ params }: ListingPageProps): Promise<Me
   const { slug } = await params;
   const listing = await getListingBySlug(slug);
   if (!listing) return {};
+
+  const title = listing.seoTitle || `${listing.title} — ${listing.city} | LUMA`;
+  const description = listing.seoDescription || listing.shortDescription;
+  const image = listing.images[0];
+
   return {
-    title: `${listing.title} — ${listing.city} | LUMA`,
-    description: listing.shortDescription,
+    title,
+    description,
+    alternates: { canonical: `/listing/${slug}` },
+    openGraph: {
+      title,
+      description,
+      url: `/listing/${slug}`,
+      type: "website",
+      images: image ? [{ url: image, width: 1200, height: 800, alt: listing.title }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: image ? [image] : undefined,
+    },
   };
 }
 
@@ -64,8 +83,46 @@ export default async function ListingPage({ params }: ListingPageProps) {
   const story = getStoryContent(listing);
   const storyImage = listing.images[1] ?? listing.images[0];
 
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "VacationRental",
+    name: listing.title,
+    description: listing.shortDescription,
+    image: listing.images,
+    url: `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/listing/${listing.slug}`,
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: listing.city,
+      addressCountry: listing.country,
+      ...(listing.neighborhood ? { streetAddress: listing.neighborhood } : {}),
+    },
+    geo: { "@type": "GeoCoordinates", latitude: listing.location.lat, longitude: listing.location.lng },
+    numberOfBedrooms: listing.bedrooms,
+    numberOfBathroomsTotal: listing.bathrooms,
+    occupancy: { "@type": "QuantitativeValue", maxValue: listing.maxGuests },
+    ...(reviews.length > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: listing.rating,
+            reviewCount: listing.reviewCount,
+          },
+        }
+      : {}),
+    offers: {
+      "@type": "Offer",
+      price: listing.pricePerNight.amount,
+      priceCurrency: listing.pricePerNight.currency,
+      availability: "https://schema.org/InStock",
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <Navbar />
       <main className="pb-24 pt-28">
         <div className="mx-auto w-full max-w-7xl px-6 md:px-10">
@@ -165,8 +222,12 @@ export default async function ListingPage({ params }: ListingPageProps) {
               </Reveal>
             </div>
 
-            <div className="lg:sticky lg:top-28 lg:h-fit">
-              <BookingCard listing={listing} />
+            {/* On mobile this grid collapses to one column — without an explicit
+                order, the booking card (price + Reserve) would fall dead last,
+                after every content section, forcing guests to scroll past the
+                whole page before they can even see the price. */}
+            <div className="order-first lg:order-none lg:sticky lg:top-28 lg:h-fit">
+              <BookingCard listing={listing} bookedRanges={bookedRanges} />
             </div>
           </div>
         </div>

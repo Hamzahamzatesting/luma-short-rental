@@ -69,6 +69,7 @@ export function AuthMenu() {
           <DropdownMenuLabel className="truncate">{user.email}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem render={<Link href="/bookings">My Bookings</Link>} nativeButton={false} />
+          <DropdownMenuItem render={<Link href="/favorites">Saved Stays</Link>} nativeButton={false} />
           <DropdownMenuItem render={<Link href="/account">Account</Link>} nativeButton={false} />
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>Sign Out</DropdownMenuItem>

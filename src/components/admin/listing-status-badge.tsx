@@ -10,7 +10,7 @@ const STATUS_STYLE: Record<ListingStatus, string> = {
 
 export function ListingStatusBadge({ status, className }: { status: ListingStatus; className?: string }) {
   return (
-    <Badge variant="ghost" className={cn("uppercase tracking-wide", STATUS_STYLE[status], className)}>
+    <Badge variant="ghost" className={cn("tracking-label uppercase", STATUS_STYLE[status], className)}>
       {status}
     </Badge>
   );

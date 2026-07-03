@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { SearchResults } from "@/components/search/search-results";
@@ -11,6 +12,26 @@ interface SearchPageProps {
 
 function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
+}
+
+export async function generateMetadata({ searchParams }: SearchPageProps): Promise<Metadata> {
+  const params = await searchParams;
+  const destinationSlug = first(params.destination);
+  const destination = destinationSlug ? await getDestinationBySlug(destinationSlug) : null;
+
+  const title = destination
+    ? `Luxury Stays in ${destination.name}, ${destination.country} | LUMA`
+    : "Search Luxury Stays in Morocco | LUMA";
+  const description = destination
+    ? (destination.blurb ?? `Curated luxury homes in ${destination.name} — handpicked for design, privacy and effortless service.`)
+    : "Browse LUMA's curated collection of luxury homes across Morocco's most exceptional destinations.";
+
+  return {
+    title,
+    description,
+    alternates: { canonical: destinationSlug ? `/search?destination=${destinationSlug}` : "/search" },
+    openGraph: { title, description, url: destinationSlug ? `/search?destination=${destinationSlug}` : "/search" },
+  };
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {

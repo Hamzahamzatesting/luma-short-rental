@@ -6,6 +6,8 @@ import { Section } from "@/components/layout/section";
 import { Reveal } from "@/components/motion/reveal";
 import { createClient } from "@/lib/supabase/server";
 import { DeleteAccountDialog } from "@/components/account/delete-account-dialog";
+import { EditProfileForm } from "@/components/account/edit-profile-form";
+import { ChangePasswordForm } from "@/components/account/change-password-form";
 
 export const metadata: Metadata = { title: "Account | LUMA" };
 
@@ -32,10 +34,15 @@ export default async function AccountPage() {
 
           <Reveal className="mx-auto flex max-w-xl flex-col gap-8">
             <div className="rounded-lg border border-border bg-card p-6">
-              <p className="mb-1 text-xs uppercase tracking-label text-muted-foreground">Name</p>
-              <p className="mb-4 text-foreground">{profile?.full_name ?? "—"}</p>
+              <h2 className="mb-4 font-serif text-lg text-foreground">Profile</h2>
               <p className="mb-1 text-xs uppercase tracking-label text-muted-foreground">Email</p>
-              <p className="text-foreground">{user.email}</p>
+              <p className="mb-5 text-foreground">{user.email}</p>
+              <EditProfileForm fullName={profile?.full_name ?? ""} />
+            </div>
+
+            <div className="rounded-lg border border-border bg-card p-6">
+              <h2 className="mb-4 font-serif text-lg text-foreground">Password</h2>
+              <ChangePasswordForm />
             </div>
 
             <div className="rounded-lg border border-destructive/30 bg-card p-6">

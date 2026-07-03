@@ -4,6 +4,7 @@ import { z } from "zod";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, rateLimitMessage } from "@/lib/rate-limit";
 
 export type FormState = { error?: string; message?: string } | undefined;
 
@@ -39,6 +40,9 @@ export async function signUpWithPassword(
     return { error: parsed.error.issues[0]?.message ?? "Please check your details." };
   }
 
+  const limit = await checkRateLimit(parsed.data.email, "signup", { max: 5, windowMinutes: 60 });
+  if (!limit.allowed) return { error: rateLimitMessage("sign-up", limit) };
+
   const supabase = await createClient();
   const origin = await siteOrigin();
   const { error } = await supabase.auth.signUp({
@@ -66,6 +70,9 @@ export async function signInWithPassword(
     return { error: parsed.error.issues[0]?.message ?? "Please check your details." };
   }
 
+  const limit = await checkRateLimit(parsed.data.email, "login", { max: 5, windowMinutes: 15 });
+  if (!limit.allowed) return { error: rateLimitMessage("login", limit) };
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { error: error.message };
@@ -82,6 +89,9 @@ export async function requestPasswordReset(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Please enter a valid email." };
   }
+
+  const limit = await checkRateLimit(parsed.data, "password-reset", { max: 3, windowMinutes: 60 });
+  if (!limit.allowed) return { error: rateLimitMessage("password-reset", limit) };
 
   const supabase = await createClient();
   const origin = await siteOrigin();

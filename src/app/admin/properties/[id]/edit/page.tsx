@@ -4,6 +4,7 @@ import { getListingByIdAdmin } from "@/lib/data/admin/listings";
 import { getDestinations } from "@/lib/data/destinations";
 import { getHosts } from "@/lib/data/hosts";
 import { getAmenities } from "@/lib/data/amenities";
+import { getAvailabilityBlocksForListing } from "@/lib/data/admin/availability";
 import { updateListing } from "@/lib/actions/admin/listings";
 import { PropertyForm } from "@/components/admin/property-form";
 
@@ -11,11 +12,12 @@ export const metadata: Metadata = { title: "Edit property — LUMA Admin" };
 
 export default async function EditPropertyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [listing, destinations, hosts, amenities] = await Promise.all([
+  const [listing, destinations, hosts, amenities, availabilityBlocks] = await Promise.all([
     getListingByIdAdmin(id),
     getDestinations(),
     getHosts(),
     getAmenities(),
+    getAvailabilityBlocksForListing(id),
   ]);
 
   if (!listing) notFound();
@@ -31,6 +33,7 @@ export default async function EditPropertyPage({ params }: { params: Promise<{ i
         destinations={destinations}
         hosts={hosts}
         amenities={amenities}
+        availabilityBlocks={availabilityBlocks}
         action={updateListing}
       />
     </div>

@@ -35,6 +35,13 @@ In the Supabase dashboard's **SQL Editor**, run each file in `supabase/migration
 11. `0011_bookings_admin_lifecycle.sql`
 12. `0012_media_storage.sql`
 13. `0013_admin_email_allowlist.sql`
+14. `0014_rate_limit_attempts.sql`
+15. `0015_review_moderation.sql`
+16. `0016_media_upload_limits.sql`
+17. `0017_availability_blocks.sql`
+18. `0018_reviews_guest_submission.sql`
+19. `0019_bookings_refund_tracking.sql`
+20. `0020_favorites.sql`
 
 Then run `supabase/seed.sql` to populate the catalog (21 listings, 7 destinations, 5 hosts, 84 reviews, 6 testimonials, 6 FAQs — transcribed from the Phase 1 mock data). If you ever change the mock fixtures and want to regenerate it: `npx tsx scripts/generate-seed.ts > supabase/seed.sql`.
 

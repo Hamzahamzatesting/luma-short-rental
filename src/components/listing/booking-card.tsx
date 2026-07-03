@@ -14,8 +14,14 @@ import { Input } from "@/components/ui/input";
 import { createBooking } from "@/lib/actions/bookings";
 import type { Listing } from "@/lib/data/types";
 
+interface DateRange {
+  start: string;
+  end: string;
+}
+
 interface BookingCardProps {
   listing: Listing;
+  bookedRanges?: DateRange[];
 }
 
 const TRUST_BADGES = [
@@ -31,7 +37,14 @@ function nightsBetween(checkIn: string, checkOut: string): number {
   return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)));
 }
 
-export function BookingCard({ listing }: BookingCardProps) {
+/** Half-open interval overlap — mirrors the DB's `daterange(check_in, check_out, '[)')` exclusion constraint. */
+function rangesOverlap(checkIn: string, checkOut: string, ranges: DateRange[]): boolean {
+  return ranges.some((r) => checkIn < r.end && checkOut > r.start);
+}
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
+export function BookingCard({ listing, bookedRanges = [] }: BookingCardProps) {
   const [state, formAction, pending] = useActionState(createBooking, undefined);
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
@@ -44,6 +57,11 @@ export function BookingCard({ listing }: BookingCardProps) {
   const cleaningFee = nights > 0 ? listing.cleaningFee.amount : 0;
   const serviceFee = nights > 0 ? Math.round(subtotal * 0.08) : 0;
   const total = subtotal + cleaningFee + serviceFee;
+
+  // Catches the common case instantly, client-side, instead of only after
+  // a round trip to the server — the database exclusion constraint is
+  // still the real, final guard against a double-booking either way.
+  const hasDateOverlap = Boolean(checkIn && checkOut && rangesOverlap(checkIn, checkOut, bookedRanges));
 
   return (
     <div className="rounded-3xl border border-gold/25 bg-card p-8 shadow-[0_24px_64px_-24px_rgba(0,0,0,0.55)]">
@@ -81,7 +99,11 @@ export function BookingCard({ listing }: BookingCardProps) {
               type="date"
               name="checkIn"
               value={checkIn}
-              onChange={(e) => setCheckIn(e.target.value)}
+              min={todayStr()}
+              onChange={(e) => {
+                setCheckIn(e.target.value);
+                if (checkOut && checkOut <= e.target.value) setCheckOut("");
+              }}
               required
               className="h-auto border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
             />
@@ -94,12 +116,19 @@ export function BookingCard({ listing }: BookingCardProps) {
               type="date"
               name="checkOut"
               value={checkOut}
+              min={checkIn || todayStr()}
               onChange={(e) => setCheckOut(e.target.value)}
               required
               className="h-auto border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
             />
           </div>
         </div>
+
+        {hasDateOverlap ? (
+          <p className="text-xs text-destructive">
+            Those dates aren&apos;t available for this property — please choose a different range.
+          </p>
+        ) : null}
 
         <div className="rounded-xl border border-border p-4">
           <label className="text-[0.65rem] font-medium uppercase tracking-label text-muted-foreground">
@@ -123,7 +152,7 @@ export function BookingCard({ listing }: BookingCardProps) {
         <Button
           type="submit"
           size="xl"
-          disabled={pending}
+          disabled={pending || hasDateOverlap}
           className="mt-2 w-full transition-all duration-300 hover:shadow-[0_8px_24px_-6px_rgba(212,175,55,0.5)] hover:brightness-110 active:scale-[0.98]"
         >
           {pending ? "Reserving…" : "Reserve"}

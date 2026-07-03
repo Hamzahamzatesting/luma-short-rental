@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { Booking, BookingStatus } from "./types";
+import type { Booking, BookingStatus, CancellationPolicy } from "./types";
 
 interface BookingRow {
   id: string;
@@ -14,6 +14,7 @@ interface BookingRow {
   service_fee: number;
   total: number;
   status: BookingStatus;
+  refund_percent: number | null;
   created_at: string;
   updated_at: string;
   listing: {
@@ -21,6 +22,7 @@ interface BookingRow {
     title: string;
     images: string[];
     city: string;
+    cancellation_policy: CancellationPolicy | null;
   } | null;
 }
 
@@ -41,13 +43,15 @@ function mapBookingRow(row: BookingRow): Booking {
     serviceFee: { amount: row.service_fee, currency: "MAD" },
     total: { amount: row.total, currency: "MAD" },
     status: row.status,
+    refundPercent: row.refund_percent ?? undefined,
+    listingCancellationPolicy: row.listing?.cancellation_policy ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
 const BOOKING_SELECT =
-  "*, listing:listings(slug, title, images, city)";
+  "*, listing:listings(slug, title, images, city, cancellation_policy)";
 
 /** Filtered explicitly by the current user as defense-in-depth on top of RLS. */
 export async function getBookingsForUser(): Promise<Booking[]> {
@@ -88,4 +92,16 @@ export function canCancelBooking(booking: Pick<Booking, "status" | "checkIn">): 
   if (booking.status === "cancelled") return false;
   const todayStr = new Date().toISOString().slice(0, 10);
   return booking.checkIn > todayStr;
+}
+
+/**
+ * Nothing here automatically transitions a booking to "checked_out" or
+ * "completed" on a schedule — that only happens if an admin sets it by
+ * hand — so eligibility is date-based instead: any non-cancelled,
+ * non-refunded stay whose checkout date has already passed.
+ */
+export function canReviewBooking(booking: Pick<Booking, "status" | "checkOut">): boolean {
+  if (booking.status === "cancelled" || booking.status === "refunded") return false;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  return booking.checkOut <= todayStr;
 }

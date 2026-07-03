@@ -29,8 +29,9 @@ export default async function AdminBookingsPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-heading text-2xl font-medium text-foreground">Bookings</h1>
-        <p className="text-sm text-muted-foreground">{bookings.length} reservations</p>
+        <p className="label-eyebrow">Operations</p>
+        <h1 className="mt-1 font-heading text-2xl font-medium text-foreground md:text-3xl">Bookings</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{bookings.length} reservations</p>
       </div>
 
       <div className="flex flex-wrap gap-1.5">
@@ -39,10 +40,10 @@ export default async function AdminBookingsPage({
             key={f.label}
             href={f.status ? `/admin/bookings?status=${f.status}` : "/admin/bookings"}
             className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium tracking-wide uppercase transition-colors",
+              "tracking-label rounded-full border px-3 py-1 text-xs font-medium uppercase transition-colors",
               status === f.status || (!status && !f.status)
                 ? "border-gold bg-gold/10 text-gold"
-                : "border-border text-muted-foreground hover:text-foreground"
+                : "border-border text-muted-foreground hover:border-gold/40 hover:text-foreground"
             )}
           >
             {f.label}

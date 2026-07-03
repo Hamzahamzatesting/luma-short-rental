@@ -90,6 +90,21 @@ export function bookingConfirmationEmail({
             </td>
           </tr>
 
+          <!-- Payment notice -->
+          <tr>
+            <td style="padding: 20px 40px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F3ECE3; border:1px solid #E9E2D6; border-radius:4px;">
+                <tr>
+                  <td style="padding:14px 18px;">
+                    <p style="margin:0; font-size:12.5px; line-height:19px; color:#4a423c;">
+                      <strong style="color:#0B0F14;">Payment:</strong> your dates are held — a member of our concierge team will contact you directly within one business day to arrange payment.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
           <!-- Listing image -->
           <tr>
             <td style="padding: 24px 40px 0;">

@@ -210,14 +210,21 @@ export async function getAllListingSlugs(): Promise<string[]> {
   return (data ?? []).map((l) => l.slug as string);
 }
 
-/** Booked (non-cancelled) date ranges for a listing, used to disable dates in StaticCalendar. */
+/**
+ * Unavailable date ranges for a listing — real bookings plus admin-set
+ * blocks (maintenance, owner stays) — used to disable dates in the
+ * calendar preview and to validate the booking widget client-side.
+ */
 export async function getBookedDateRangesForListing(
   listingId: string
 ): Promise<{ start: string; end: string }[]> {
   const supabase = createPublicClient();
-  const { data } = await supabase
-    .from("booked_date_ranges")
-    .select("check_in, check_out")
-    .eq("listing_id", listingId);
-  return (data ?? []).map((b) => ({ start: b.check_in as string, end: b.check_out as string }));
+  const [{ data: booked }, { data: blocked }] = await Promise.all([
+    supabase.from("booked_date_ranges").select("check_in, check_out").eq("listing_id", listingId),
+    supabase.from("blocked_date_ranges").select("start_date, end_date").eq("listing_id", listingId),
+  ]);
+  return [
+    ...(booked ?? []).map((b) => ({ start: b.check_in as string, end: b.check_out as string })),
+    ...(blocked ?? []).map((b) => ({ start: b.start_date as string, end: b.end_date as string })),
+  ];
 }

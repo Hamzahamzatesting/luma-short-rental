@@ -20,7 +20,7 @@ export const FOOTER_LINKS = {
   ],
   support: [
     { label: "FAQ", href: "/#faq" },
-    { label: "Contact", href: "mailto:hello@luma.stays" },
+    { label: "Contact", href: "/contact" },
   ],
 } as const;
 

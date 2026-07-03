@@ -26,7 +26,7 @@ const STATUS_LABEL: Record<BookingStatus, string> = {
 
 export function BookingStatusBadge({ status, className }: { status: BookingStatus; className?: string }) {
   return (
-    <Badge variant="ghost" className={cn("uppercase tracking-wide", STATUS_STYLE[status], className)}>
+    <Badge variant="ghost" className={cn("tracking-label uppercase", STATUS_STYLE[status], className)}>
       {STATUS_LABEL[status]}
     </Badge>
   );

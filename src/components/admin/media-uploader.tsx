@@ -24,6 +24,14 @@ import { attachMedia, reorderMedia } from "@/lib/actions/admin/listings";
 
 const ACCEPT = { image: "image/*", video: "video/*" };
 const BUCKET = "listing-media";
+// Mirrors the listing-media bucket's real limits (0016_media_upload_limits.sql)
+// so a bad file is rejected instantly instead of after a slow upload attempt.
+// The bucket config is still the actual enforcement — this is just faster UX.
+const MAX_FILE_BYTES = 104_857_600; // 100 MB
+const ALLOWED_MIME_TYPES = {
+  image: ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"],
+  video: ["video/mp4", "video/webm", "video/quicktime"],
+};
 
 function SortableThumb({
   url,
@@ -88,11 +96,26 @@ export function MediaUploader({
 
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return;
+
+    const valid: File[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_BYTES) {
+        toast.error(`${file.name} is over the 100 MB limit.`);
+        continue;
+      }
+      if (!ALLOWED_MIME_TYPES[kind].includes(file.type)) {
+        toast.error(`${file.name} isn't a supported ${kind} type.`);
+        continue;
+      }
+      valid.push(file);
+    }
+    if (!valid.length) return;
+
     setUploading(true);
     const supabase = createClient();
     const uploaded: string[] = [];
 
-    for (const file of Array.from(files)) {
+    for (const file of valid) {
       const path = `${listingId}/${kind}/${crypto.randomUUID()}-${file.name}`;
       const { error } = await supabase.storage.from(BUCKET).upload(path, file);
       if (error) {

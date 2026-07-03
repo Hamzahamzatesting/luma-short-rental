@@ -35,6 +35,10 @@ export default async function BookingConfirmationPage({ params }: ConfirmationPa
             <p className="text-muted-foreground">
               A confirmation has been saved to your account. We look forward to hosting you.
             </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              We&apos;ve also sent a confirmation email — check your spam or promotions folder if it
+              doesn&apos;t arrive shortly.
+            </p>
           </Reveal>
 
           <Reveal delay={0.1} className="mx-auto mt-10 max-w-xl overflow-hidden rounded-lg border border-border bg-card">
@@ -102,6 +106,12 @@ export default async function BookingConfirmationPage({ params }: ConfirmationPa
                   <span>{booking.total.amount.toLocaleString()} MAD</span>
                 </div>
               </div>
+
+              <div className="rounded-md border border-gold/20 bg-gold/5 p-3.5 text-xs leading-relaxed text-muted-foreground">
+                <span className="font-medium text-foreground">Payment: </span>
+                your dates are held — a member of our concierge team will contact you directly
+                within one business day to arrange payment.
+              </div>
             </div>
           </Reveal>
 
@@ -112,7 +122,12 @@ export default async function BookingConfirmationPage({ params }: ConfirmationPa
 
           {canCancelBooking(booking) && (
             <Reveal delay={0.2} className="mx-auto mt-4 flex max-w-xl justify-center">
-              <CancelBookingDialog bookingId={booking.id} listingTitle={booking.listingTitle} />
+              <CancelBookingDialog
+                bookingId={booking.id}
+                listingTitle={booking.listingTitle}
+                checkIn={booking.checkIn}
+                cancellationPolicy={booking.listingCancellationPolicy}
+              />
             </Reveal>
           )}
         </Section>

@@ -10,15 +10,21 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPropertiesPage() {
   const listings = await getAllListingsAdmin();
+  const published = listings.filter((l) => l.status === "published").length;
+  const draft = listings.filter((l) => l.status === "draft").length;
+  const archived = listings.filter((l) => l.status === "archived").length;
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-heading text-2xl font-medium text-foreground">Properties</h1>
-          <p className="text-sm text-muted-foreground">{listings.length} total</p>
+          <p className="label-eyebrow">Portfolio</p>
+          <h1 className="mt-1 font-heading text-2xl font-medium text-foreground md:text-3xl">Properties</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {listings.length} total &middot; {published} published &middot; {draft} draft &middot; {archived} archived
+          </p>
         </div>
-        <Button render={<Link href="/admin/properties/new" />} nativeButton={false}>
+        <Button render={<Link href="/admin/properties/new" />} nativeButton={false} size="lg">
           <Plus />
           New property
         </Button>

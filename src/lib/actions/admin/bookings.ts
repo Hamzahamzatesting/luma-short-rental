@@ -7,7 +7,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, EMAIL_FROM } from "@/lib/email/client";
 import { bookingConfirmationEmail, bookingConfirmationSubject } from "@/lib/email/booking-confirmation";
 import { bookingCancellationEmail, bookingCancellationSubject } from "@/lib/email/booking-cancellation";
-import type { BookingStatus } from "@/lib/data/types";
+import { getCancellationTerms } from "@/lib/cancellation-policy";
+import type { BookingStatus, CancellationPolicy } from "@/lib/data/types";
 
 export type BookingActionResult = { error: string } | { ok: true };
 
@@ -74,9 +75,19 @@ export async function confirmBooking(formData: FormData): Promise<BookingActionR
 
 async function setCancelled(id: string, reason: string | undefined, notify: boolean): Promise<BookingActionResult> {
   const supabase = createAdminClient();
+
+  const { data: current } = await supabase
+    .from("bookings")
+    .select("check_in, listing:listings(cancellation_policy)")
+    .eq("id", id)
+    .maybeSingle();
+  const policy = (current?.listing as unknown as { cancellation_policy: CancellationPolicy | null } | null)
+    ?.cancellation_policy;
+  const refundPercent = current ? getCancellationTerms(policy ?? undefined, current.check_in).refundPercent : null;
+
   const { error } = await supabase
     .from("bookings")
-    .update({ status: "cancelled", admin_notes: reason ?? null })
+    .update({ status: "cancelled", admin_notes: reason ?? null, refund_percent: refundPercent })
     .eq("id", id);
   if (error) return { error: "Could not update this booking." };
 

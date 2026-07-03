@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, type ReactNode } from "react";
+import { useActionState, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,9 @@ import {
 } from "@/components/ui/select";
 import { MediaUploader } from "@/components/admin/media-uploader";
 import { AddHostDialog } from "@/components/admin/add-host-dialog";
+import { AvailabilityBlocksManager } from "@/components/admin/availability-blocks-manager";
 import type { ListingFormState } from "@/lib/actions/admin/listings";
+import type { AvailabilityBlock } from "@/lib/data/admin/availability";
 import type { Amenity, Destination, Host, Listing } from "@/lib/data/types";
 
 interface PropertyFormProps {
@@ -25,6 +27,7 @@ interface PropertyFormProps {
   destinations: Destination[];
   hosts: Host[];
   amenities: Amenity[];
+  availabilityBlocks?: AvailabilityBlock[];
   action: (prevState: ListingFormState, formData: FormData) => Promise<ListingFormState>;
 }
 
@@ -89,7 +92,7 @@ function BoolField({
   );
 }
 
-export function PropertyForm({ listing, destinations, hosts, amenities, action }: PropertyFormProps) {
+export function PropertyForm({ listing, destinations, hosts, amenities, availabilityBlocks, action }: PropertyFormProps) {
   const [state, formAction, pending] = useActionState<ListingFormState, FormData>(action, undefined);
   // Forces the (uncontrolled) fields below to remount and re-read their
   // defaultValue/defaultChecked from the latest `state` after React's
@@ -101,11 +104,15 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
   // submission instead of vanishing when the Tabs subtree remounts.
   const [hostOptions, setHostOptions] = useState<Pick<Host, "id" | "name">[]>(hosts);
   const [selectedHostId, setSelectedHostId] = useState(pick(state, "hostId") ?? listing?.hostId ?? "");
-  useEffect(() => {
+  // Recover the selected host after a failed submission — adjusted during
+  // render (not an effect) so it lands before the browser paints the stale
+  // value; see the `pick*` helpers above for why this recovery is needed.
+  const [handledState, setHandledState] = useState(state);
+  if (state !== handledState) {
+    setHandledState(state);
     const recovered = pick(state, "hostId");
     if (recovered) setSelectedHostId(recovered);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]);
+  }
 
   return (
     <form action={formAction} className="flex flex-col gap-6">
@@ -119,6 +126,7 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
           <TabsTrigger value="amenities">Amenities &amp; Rules</TabsTrigger>
           <TabsTrigger value="seo">SEO</TabsTrigger>
           {listing ? <TabsTrigger value="media">Media</TabsTrigger> : null}
+          {listing ? <TabsTrigger value="availability">Availability</TabsTrigger> : null}
         </TabsList>
 
         <TabsContent value="basics" keepMounted className="flex flex-col gap-4 pt-4">
@@ -433,6 +441,12 @@ export function PropertyForm({ listing, destinations, hosts, amenities, action }
               <p className="mb-2 text-sm font-medium text-foreground">Videos</p>
               <MediaUploader listingId={listing.id} kind="video" urls={listing.videos} />
             </div>
+          </TabsContent>
+        ) : null}
+
+        {listing ? (
+          <TabsContent value="availability" keepMounted className="pt-4">
+            <AvailabilityBlocksManager listingId={listing.id} blocks={availabilityBlocks ?? []} />
           </TabsContent>
         ) : null}
       </Tabs>

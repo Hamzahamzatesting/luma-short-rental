@@ -33,6 +33,7 @@ interface AdminBookingRow {
   total: number;
   status: BookingStatus;
   admin_notes: string | null;
+  refund_percent: number | null;
   created_at: string;
   updated_at: string;
   listing: { slug: string; title: string; images: string[] } | null;
@@ -134,6 +135,7 @@ export async function getBookingByIdAdmin(id: string): Promise<AdminBookingDetai
     total: { amount: row.total, currency: "MAD" },
     status: row.status,
     adminNotes: row.admin_notes ?? undefined,
+    refundPercent: row.refund_percent ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     guestId: row.user_id,

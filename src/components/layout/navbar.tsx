@@ -34,6 +34,16 @@ export function Navbar({ transparentAtTop = false }: NavbarProps) {
         isTransparent ? "bg-transparent" : "bg-midnight/90 backdrop-blur-md border-b border-ivory/10"
       )}
     >
+      {/* Content scrolling underneath a hard-edged fixed header gets sliced
+          off abruptly at whatever scroll position a touch-scroll happens to
+          stop at. This softens that edge into a fade so anything passing
+          through reads as easing in, not clipped. */}
+      {!isTransparent && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-full h-6 bg-gradient-to-b from-midnight/35 to-transparent"
+        />
+      )}
       <div className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-6 md:px-10">
         <Link href="/" aria-label="LUMA home">
           <Logo variant="primary" height={30} />

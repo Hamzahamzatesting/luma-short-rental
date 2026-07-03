@@ -44,6 +44,8 @@ export const reviewsMock: Review[] = listingsMock.flatMap((listing, listingIndex
       rating: 4.5 + ((listingIndex + i) % 6) * 0.1,
       comment: COMMENT_TEMPLATES[commentIndex],
       date: reviewDate(20 + listingIndex * 4 + i * 15),
+      status: "approved",
+      isFeatured: false,
     } satisfies Review;
   });
 });

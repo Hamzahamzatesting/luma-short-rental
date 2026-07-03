@@ -21,6 +21,8 @@ export interface Host {
   bio?: string;
 }
 
+export type ReviewStatus = "pending" | "approved" | "hidden";
+
 export interface Review {
   id: string;
   listingId: string;
@@ -29,6 +31,8 @@ export interface Review {
   rating: number;
   comment: string;
   date: string;
+  status: ReviewStatus;
+  isFeatured: boolean;
 }
 
 export interface Destination {
@@ -144,6 +148,8 @@ export interface Booking {
   total: Money;
   status: BookingStatus;
   adminNotes?: string;
+  refundPercent?: number;
+  listingCancellationPolicy?: CancellationPolicy;
   createdAt: string;
   updatedAt: string;
 }

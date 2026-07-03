@@ -1,17 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFavorites } from "./favorites-provider";
 
 interface FavoriteButtonProps {
+  listingId: string;
   className?: string;
-  initial?: boolean;
 }
 
-/** Local-state only in Phase 1 — no persistence until accounts/Supabase land. */
-export function FavoriteButton({ className, initial = false }: FavoriteButtonProps) {
-  const [favorited, setFavorited] = useState(initial);
+export function FavoriteButton({ listingId, className }: FavoriteButtonProps) {
+  const { favoriteIds, toggle } = useFavorites();
+  const favorited = favoriteIds.has(listingId);
 
   return (
     <button
@@ -21,7 +21,7 @@ export function FavoriteButton({ className, initial = false }: FavoriteButtonPro
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        setFavorited((v) => !v);
+        toggle(listingId);
       }}
       className={cn(
         "flex size-8 items-center justify-center rounded-full bg-midnight/40 backdrop-blur-sm transition-colors hover:bg-midnight/60",
