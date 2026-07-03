@@ -1,12 +1,21 @@
 "use server";
 
 import { z } from "zod";
+import type { AuthError } from "@supabase/supabase-js";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit, rateLimitMessage } from "@/lib/rate-limit";
 
 export type FormState = { error?: string; message?: string } | undefined;
+
+// supabase-js stringifies the raw Response for 5xx/network errors, yielding "{}" as error.message — fall back to a friendly message instead.
+function authErrorMessage(error: AuthError): string {
+  if (!error.status || error.status >= 500) {
+    return "Something went wrong on our end. Please try again in a moment.";
+  }
+  return error.message;
+}
 
 const emailSchema = z.email("Please enter a valid email.");
 const passwordSchema = z.string().min(8, "Password must be at least 8 characters.");
@@ -54,7 +63,7 @@ export async function signUpWithPassword(
     },
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: authErrorMessage(error) };
   return { message: "Check your email to confirm your account before signing in." };
 }
 
@@ -75,7 +84,7 @@ export async function signInWithPassword(
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error) return { error: error.message };
+  if (error) return { error: authErrorMessage(error) };
 
   const redirectTo = formData.get("redirect");
   redirect(typeof redirectTo === "string" && redirectTo ? redirectTo : "/");
@@ -98,7 +107,7 @@ export async function requestPasswordReset(
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
     redirectTo: `${origin}/auth/callback?next=/reset-password`,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: authErrorMessage(error) };
   return { message: "Check your email for a password reset link." };
 }
 
@@ -113,7 +122,7 @@ export async function updatePassword(
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password: parsed.data });
-  if (error) return { error: error.message };
+  if (error) return { error: authErrorMessage(error) };
   redirect("/login");
 }
 

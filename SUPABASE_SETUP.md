@@ -74,7 +74,26 @@ Supabase's default auth emails are unbranded. Paste the branded versions into **
 - **Change Email Address** → paste `supabase/email-templates/email-change.html`, subject `Confirm your new email — LUMA`
 - **Reauthentication** → paste `supabase/email-templates/reauthentication.html`, subject `Your LUMA confirmation code`
 
-## 8. Booking confirmation emails (Resend)
+## 8. Custom SMTP for Auth emails (required — do this before real users sign up)
+
+Supabase's built-in email sender (used for the templates in step 7) is rate-limited to a handful of emails per hour and is documented as being for testing only. Once exceeded, `supabase.auth.signUp` (and reset/magic-link/etc.) start failing with a 500 `"Error sending confirmation email"` — signups silently break with no warning in the dashboard.
+
+Fix it by pointing Supabase at your own SMTP provider — Resend (already set up in step 9) works:
+
+**Authentication → Settings → SMTP Settings** → enable "Enable Custom SMTP" and fill in:
+
+```
+Sender email:     bookings@yourdomain.com   (must be a domain verified in Resend — see step 9)
+Sender name:       LUMA
+Host:              smtp.resend.com
+Port:              465
+Username:          resend
+Password:          <your Resend API key>
+```
+
+The shared `onboarding@resend.dev` sandbox address does **not** work here (Resend requires a verified domain for SMTP sending), so this step depends on having verified your own domain in Resend first. Until custom SMTP is configured, expect Auth emails to work briefly then start failing once you hit Supabase's built-in rate limit.
+
+## 9. Booking confirmation emails (Resend)
 
 Booking confirmations are sent by our own code (not Supabase), via [Resend](https://resend.com). Add to `.env.local`:
 
@@ -85,7 +104,7 @@ RESEND_FROM_EMAIL=LUMA <onboarding@resend.dev>
 
 The sandbox sender (`onboarding@resend.dev`) works immediately with no setup, but mail providers often route it to spam since it's a shared domain used by many test apps — expect to find test emails in Spam and mark them "Not spam." **Before going live**, verify your own domain in Resend (Domains → Add Domain → add the TXT/CNAME records it gives you to your DNS), then change `RESEND_FROM_EMAIL` to `LUMA <bookings@yourdomain.com>` for reliable inbox delivery.
 
-## 9. Admin dashboard (Phase 3)
+## 10. Admin dashboard (Phase 3)
 
 Migrations `0009`–`0013` add an admin role, a `listing-media` Storage bucket (public read, admin-only write), and the extra listing/booking fields the `/admin` dashboard needs.
 
